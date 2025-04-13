@@ -1,6 +1,8 @@
 package com.vibevault.userservice.models;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.ManyToOne;
 import lombok.*;
 
@@ -19,4 +21,7 @@ public class Session extends BaseModel{
     private String device;
     private String ipAddress;
     private Date expiredAt;
+
+    @Enumerated(EnumType.ORDINAL)
+    private SessionStatus status;
 }
