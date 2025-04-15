@@ -1,13 +1,16 @@
 package com.vibevault.userservice.models;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import jakarta.persistence.Entity;
-import jakarta.persistence.ManyToMany;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.List;
 
 @Entity(name = "users")
+@Table(indexes = {
+        @Index(name = "idx_user_email", columnList = "email"),
+        @Index(name = "idx_user_phonenumber", columnList = "phoneNumber")
+})
 @EqualsAndHashCode(callSuper = false)
 @Getter
 @Setter
@@ -16,15 +19,13 @@ import java.util.List;
 public class User extends BaseModel{
     private String firstName;
     private String lastName;
-    private String email;
-    private String password;
-    private String phoneNumber;
-    private String address;
-    private String city;
-    private String state;
-    private String country;
-    private String zipCode;
 
-    @ManyToMany
-    private List<Role> roles;
+    @Column(nullable = false, unique = true)
+    private String email;
+
+    @Column(nullable = false)
+    @JsonIgnore
+    private String password;
+
+    private String phoneNumber;
 }

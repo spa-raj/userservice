@@ -1,7 +1,12 @@
 package com.vibevault.userservice.services;
 
-import org.springframework.stereotype.Service;
+import com.vibevault.userservice.exceptions.*;
+import com.vibevault.userservice.models.Session;
+import com.vibevault.userservice.models.User;
 
-@Service
-public class AuthService {
+public interface AuthService {
+    public Session login(String email, String passwoord);
+    public User signup(String email, String password, String name, String phone)throws EmptyEmailException, EmptyPasswordException, EmptyPhoneException, EmailAlreadyExistsException, PhoneAlreadyExistsException, UserNotFoundException;
+    public User validateToken(String token);
+    public void logout(String token);
 }
