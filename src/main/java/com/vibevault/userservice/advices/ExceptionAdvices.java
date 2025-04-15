@@ -32,4 +32,8 @@ public class ExceptionAdvices {
     public ResponseEntity<String> handlePhoneAlreadyExistsException(PhoneAlreadyExistsException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
     }
+    @ExceptionHandler(InvalidCredentialsExcpetion.class)
+    public ResponseEntity<String> handleInvalidCredentialsException(InvalidCredentialsExcpetion ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
+    }
 }

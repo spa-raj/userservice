@@ -2,29 +2,62 @@ package com.vibevault.userservice.services;
 
 import com.vibevault.userservice.exceptions.*;
 import com.vibevault.userservice.models.Session;
+import com.vibevault.userservice.models.SessionStatus;
 import com.vibevault.userservice.models.User;
+import com.vibevault.userservice.repositories.SessionRepository;
 import com.vibevault.userservice.repositories.UserRepository;
+import com.vibevault.userservice.services.utils.ClientInfo;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class AuthServiceImpl implements AuthService {
+    private final SessionRepository sessionRepository;
     private UserRepository userRepository;
     private PasswordEncoder passwordEncoder;
 
     @Autowired
-    public AuthServiceImpl(UserRepository userRepository,  PasswordEncoder passwordEncoder) {
+    public AuthServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, SessionRepository sessionRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.sessionRepository = sessionRepository;
     }
     @Override
-    public Session login(String email, String password) {
-        return null;
+    public Session login(String email, String password)throws InvalidCredentialsExcpetion {
+        Optional<User> optionalUser = userRepository.findUserByEmail(email);
+        if(optionalUser.isEmpty()){
+            throw new InvalidCredentialsExcpetion("Invalid credentials");
+        }
+        User user = optionalUser.get();
+        if(!passwordEncoder.matches(password, user.getPassword())){
+            throw new InvalidCredentialsExcpetion("Invalid credentials");
+        }
+
+        return createSession(user);
+    }
+
+    private Session createSession(User user) {
+        Session session = new Session();
+        session.setUser(user);
+        session.setToken(RandomStringUtils.random(16,0,100,true,true,null,new Random()));
+        session.setDeleted(false);
+
+        // Set the session expiration time to 1 hour from now
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.HOUR, 1);
+        session.setExpiredAt(calendar.getTime());
+        session.setStatus(SessionStatus.ACTIVE);
+        session.setIpAddress(ClientInfo.getClientIpAddress());
+        session.setDevice(ClientInfo.getUserAgent());
+        session.setCreatedBy(user.getId());
+        session.setLastModifiedBy(user.getId());
+
+        return sessionRepository.save(session);
     }
 
     @Override

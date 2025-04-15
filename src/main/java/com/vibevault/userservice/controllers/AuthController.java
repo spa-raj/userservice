@@ -39,18 +39,22 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDto> login(@RequestBody LoginRequestDto loginRequestDto){
-        return null;
+        Session session = authService.login(loginRequestDto.getEmail(), loginRequestDto.getPassword());
+        LoginResponseDto loginResponseDto = new LoginResponseDto();
+        loginResponseDto.setToken(session.getToken());
+
+        return new ResponseEntity<>(loginResponseDto, HttpStatus.OK);
     }
 
-    @PostMapping("/validate")
-    public ResponseEntity<UserDto> validateToken(@RequestHeader("token") String token){
-        // Validate the token
-        return null;
-    }
+//    @PostMapping("/validate")
+//    public ResponseEntity<UserDto> validateToken(@RequestHeader("token") String token){
+//        // Validate the token
+//        return null;
+//    }
 
-    @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@RequestBody LogoutRequestDto logoutRequestDto){
-        // Invalidate the token
-        return null;
-    }
+//    @PostMapping("/logout")
+//    public ResponseEntity<Void> logout(@RequestBody LogoutRequestDto logoutRequestDto){
+//        // Invalidate the token
+//        return null;
+//    }
 }
