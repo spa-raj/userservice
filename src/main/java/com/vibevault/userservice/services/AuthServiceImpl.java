@@ -13,6 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
 import java.util.*;
 
 @Service
@@ -28,14 +29,14 @@ public class AuthServiceImpl implements AuthService {
         this.sessionRepository = sessionRepository;
     }
     @Override
-    public Session login(String email, String password)throws InvalidCredentialsExcpetion {
+    public Session login(String email, String password)throws InvalidCredentialsException {
         Optional<User> optionalUser = userRepository.findUserByEmail(email);
         if(optionalUser.isEmpty()){
-            throw new InvalidCredentialsExcpetion("Invalid credentials");
+            throw new InvalidCredentialsException("Invalid credentials");
         }
         User user = optionalUser.get();
         if(!passwordEncoder.matches(password, user.getPassword())){
-            throw new InvalidCredentialsExcpetion("Invalid credentials");
+            throw new InvalidCredentialsException("Invalid credentials");
         }
 
         return createSession(user);
@@ -44,7 +45,7 @@ public class AuthServiceImpl implements AuthService {
     private Session createSession(User user) {
         Session session = new Session();
         session.setUser(user);
-        session.setToken(RandomStringUtils.random(16,0,100,true,true,null,new Random()));
+        session.setToken(RandomStringUtils.random(16,0,100,true,true,null,new SecureRandom()));
         session.setDeleted(false);
 
         // Set the session expiration time to 1 hour from now
