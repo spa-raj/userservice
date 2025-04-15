@@ -3,7 +3,6 @@ package com.vibevault.userservice.services;
 import com.vibevault.userservice.exceptions.*;
 import com.vibevault.userservice.models.Session;
 import com.vibevault.userservice.models.User;
-import com.vibevault.userservice.repositories.SessionRepository;
 import com.vibevault.userservice.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -16,13 +15,11 @@ import java.util.UUID;
 @Service
 public class AuthServiceImpl implements AuthService {
     private UserRepository userRepository;
-    private SessionRepository sessionRepository;
     private PasswordEncoder passwordEncoder;
 
     @Autowired
-    public AuthServiceImpl(UserRepository userRepository, SessionRepository sessionRepository, PasswordEncoder passwordEncoder) {
+    public AuthServiceImpl(UserRepository userRepository,  PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
-        this.sessionRepository = sessionRepository;
         this.passwordEncoder = passwordEncoder;
     }
     @Override
