@@ -8,5 +8,5 @@ public interface AuthService {
     public Session login(String email, String password)throws InvalidCredentialsException;
     public User signup(String email, String password, String name, String phone)throws EmptyEmailException, EmptyPasswordException, EmptyPhoneException, EmailAlreadyExistsException, PhoneAlreadyExistsException, UserNotFoundException;
     public User validateToken(String token)throws InvalidTokenException, TokenExpiredException, UserNotFoundException;
-    public void logout(String token);
+    public void logout(String email,String token)throws TokenExpiredException,UserNotFoundException,InvalidTokenException, InvalidCredentialsException;
 }

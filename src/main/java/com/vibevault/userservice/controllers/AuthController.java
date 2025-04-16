@@ -60,9 +60,10 @@ public class AuthController {
         return new ResponseEntity<>(userDto, HttpStatus.ACCEPTED);
     }
 
-//    @PostMapping("/logout")
-//    public ResponseEntity<Void> logout(@RequestBody LogoutRequestDto logoutRequestDto){
-//        // Invalidate the token
-//        return null;
-//    }
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@RequestBody LogoutRequestDto logoutRequestDto){
+        // Invalidate the token
+        authService.logout(logoutRequestDto.getUserEmail(),logoutRequestDto.getToken());
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
 }
