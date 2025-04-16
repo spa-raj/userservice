@@ -118,8 +118,27 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public void logout(String token) {
-
+    public void logout(String email,String token)throws TokenExpiredException,UserNotFoundException,InvalidTokenException, InvalidCredentialsException {
+        Optional<Session> optionalSession = sessionRepository.findSessionsByTokenEqualsAndStatusIs(token, SessionStatus.ACTIVE);
+        if(optionalSession.isPresent()){
+            Session session = optionalSession.get();
+            if(session.getExpiredAt().before(new Date())){
+                throw new TokenExpiredException("Token already expired. Can't logout.");
+            }
+            User user = session.getUser();
+            if(user == null){
+                throw new UserNotFoundException("User not found");
+            }
+            if(!user.getEmail().equals(email)){
+                throw new InvalidCredentialsException("Token does not belong to the user");
+            }
+            session.setDeleted(true);
+            session.setStatus(SessionStatus.LOGGED_OUT);
+            sessionRepository.save(session);
+        }
+        else{
+            throw new InvalidTokenException("Invalid token");
+        }
     }
 
     @Transactional
