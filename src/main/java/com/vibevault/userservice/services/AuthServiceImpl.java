@@ -101,7 +101,7 @@ public class AuthServiceImpl implements AuthService {
 
 
     @Override
-    public User validateToken(String token) {
+    public User validateToken(String token)throws InvalidTokenException,TokenExpiredException,UserNotFoundException {
         Optional<Session> optionalSession = sessionRepository.findSessionsByTokenEqualsAndStatusIs(token, SessionStatus.ACTIVE);
         if(optionalSession.isEmpty()){
             throw new InvalidTokenException("Invalid token");
