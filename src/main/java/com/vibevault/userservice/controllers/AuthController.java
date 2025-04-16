@@ -46,11 +46,19 @@ public class AuthController {
         return new ResponseEntity<>(loginResponseDto, HttpStatus.OK);
     }
 
-//    @PostMapping("/validate")
-//    public ResponseEntity<UserDto> validateToken(@RequestHeader("token") String token){
-//        // Validate the token
-//        return null;
-//    }
+    @PostMapping("/validate")
+    public ResponseEntity<UserDto> validateToken(@RequestHeader("Authorization") String token){
+        // Validate the token
+        User user = authService.validateToken(token);
+        if(user == null) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+        UserDto userDto = new UserDto();
+        userDto.setEmail(user.getEmail());
+        userDto.setName(user.getFirstName() + " " + user.getLastName());
+        userDto.setPhone(user.getPhoneNumber());
+        return new ResponseEntity<>(userDto, HttpStatus.ACCEPTED);
+    }
 
 //    @PostMapping("/logout")
 //    public ResponseEntity<Void> logout(@RequestBody LogoutRequestDto logoutRequestDto){
