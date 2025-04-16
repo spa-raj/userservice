@@ -1,6 +1,7 @@
 package com.vibevault.userservice.repositories;
 
 import com.vibevault.userservice.models.Session;
+import com.vibevault.userservice.models.SessionStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -13,4 +14,6 @@ public interface SessionRepository extends JpaRepository<Session, UUID> {
 
     @Override
     <S extends Session> S save(S entity);
+
+    Optional<Session> findSessionsByTokenEqualsAndStatusIs(String token, SessionStatus status);
 }
