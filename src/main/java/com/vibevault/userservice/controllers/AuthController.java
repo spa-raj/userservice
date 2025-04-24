@@ -5,9 +5,16 @@ import com.vibevault.userservice.models.Session;
 import com.vibevault.userservice.models.User;
 import com.vibevault.userservice.services.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/auth")
@@ -39,11 +46,20 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDto> login(@RequestBody LoginRequestDto loginRequestDto){
-        Session session = authService.login(loginRequestDto.getEmail(), loginRequestDto.getPassword());
-        LoginResponseDto loginResponseDto = new LoginResponseDto();
-        loginResponseDto.setToken(session.getToken());
+        LoginResponseDto loginResponseDto = authService.login(loginRequestDto.getEmail(), loginRequestDto.getPassword());
+        MultiValueMap<String, String> responseHeaders = new LinkedMultiValueMap<>();
+        if(loginResponseDto == null) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+        responseHeaders.put(HttpHeaders.AUTHORIZATION, Collections.singletonList(loginResponseDto.getToken()));
+//        responseHeaders.put(HttpHeaders.SET_COOKIE, loginResponseDto.getToken());
+        responseHeaders.put("Session-Id", Collections.singletonList(loginResponseDto.getSessionId()));
 
-        return new ResponseEntity<>(loginResponseDto, HttpStatus.OK);
+        HttpHeaders headers = new HttpHeaders(responseHeaders);
+        return ResponseEntity
+                .ok()
+                .headers(headers)
+                .body(loginResponseDto);
     }
 
     @PostMapping("/validate")

@@ -1,0 +1,2 @@
+ALTER TABLE sessions
+    MODIFY COLUMN token VARCHAR(2048) NULL;
