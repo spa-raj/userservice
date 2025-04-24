@@ -196,7 +196,7 @@ public User validateToken(String token)
     }
 
     private void verifyAudience(Set<String> audience) throws InvalidTokenException {
-        if (!(audience.size() ==1) && !audience.contains(Consts.JWT_AUDIENCE)) {
+        if (!(audience.size() ==1) || !audience.contains(Consts.JWT_AUDIENCE)) {
             throw new InvalidTokenException("Invalid audience");
         }
     }
