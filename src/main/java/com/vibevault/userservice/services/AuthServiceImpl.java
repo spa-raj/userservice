@@ -1,19 +1,25 @@
 package com.vibevault.userservice.services;
 
+import com.vibevault.userservice.dtos.LoginResponseDto;
 import com.vibevault.userservice.exceptions.*;
+import com.vibevault.userservice.models.JWT;
 import com.vibevault.userservice.models.Session;
 import com.vibevault.userservice.models.SessionStatus;
 import com.vibevault.userservice.models.User;
+import com.vibevault.userservice.repositories.JWTRepository;
 import com.vibevault.userservice.repositories.SessionRepository;
 import com.vibevault.userservice.repositories.UserRepository;
 import com.vibevault.userservice.services.utils.ClientInfo;
-import org.apache.commons.lang3.RandomStringUtils;
+import io.jsonwebtoken.*;
+import io.jsonwebtoken.security.MacAlgorithm;
+import org.apache.tomcat.util.bcel.Const;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.security.SecureRandom;
+import javax.crypto.SecretKey;
+import java.security.Key;
 import java.util.*;
 
 @Service
@@ -21,15 +27,22 @@ public class AuthServiceImpl implements AuthService {
     private final SessionRepository sessionRepository;
     private UserRepository userRepository;
     private PasswordEncoder passwordEncoder;
-
+    private JWTRepository jwtRepository;
+    private  KeyLocatorImpl keyLocator;
     @Autowired
-    public AuthServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, SessionRepository sessionRepository) {
+    public AuthServiceImpl(UserRepository userRepository,
+                           PasswordEncoder passwordEncoder,
+                           SessionRepository sessionRepository,
+                           JWTRepository jwtRepository,
+                           KeyLocatorImpl keyLocator) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.sessionRepository = sessionRepository;
+        this.jwtRepository = jwtRepository;
+        this.keyLocator = keyLocator;
     }
     @Override
-    public Session login(String email, String password)throws InvalidCredentialsException {
+    public LoginResponseDto login(String email, String password)throws InvalidCredentialsException {
         Optional<User> optionalUser = userRepository.findUserByEmail(email);
         if(optionalUser.isEmpty()){
             throw new InvalidCredentialsException("Invalid credentials");
@@ -39,18 +52,25 @@ public class AuthServiceImpl implements AuthService {
             throw new InvalidCredentialsException("Invalid credentials");
         }
 
-        return createSession(user);
+        Session session = createSession(user);
+        LoginResponseDto loginResponseDto = new LoginResponseDto();
+        loginResponseDto.setToken(session.getToken());
+        loginResponseDto.setSessionId(String.valueOf(session.getId()));
+
+        return loginResponseDto;
     }
 
     private Session createSession(User user) {
         Session session = new Session();
         session.setUser(user);
-        session.setToken(RandomStringUtils.random(16,0,100,true,true,null,new SecureRandom()));
+
+        String jws = getJWT(user);
+        session.setToken(jws);
         session.setDeleted(false);
 
-        // Set the session expiration time to 1 hour from now
+        // Set the session expiration time to 1 day from now
         Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.HOUR, 1);
+        calendar.add(Calendar.HOUR, 24);
         session.setExpiredAt(calendar.getTime());
         session.setStatus(SessionStatus.ACTIVE);
         session.setIpAddress(ClientInfo.getClientIpAddress());
@@ -59,6 +79,32 @@ public class AuthServiceImpl implements AuthService {
         session.setLastModifiedBy(user.getId());
 
         return sessionRepository.save(session);
+    }
+
+    private String getJWT(User user) {
+        MacAlgorithm alg = Jwts.SIG.HS512;
+        SecretKey key = alg.key().build();
+
+        JWT jwtRecord = new JWT();
+        jwtRecord.setSecret(Base64.getEncoder().encodeToString(key.getEncoded()));
+        JWT savedJwt = jwtRepository.save(jwtRecord);
+        String kid = savedJwt.getId().toString();
+
+        String jws = Jwts.builder()
+                        .header().keyId(kid)
+                        .and()
+                        .issuer(Consts.JWT_ISSUER)
+                        .issuedAt(new Date())
+                        .expiration(new Date(System.currentTimeMillis() + Consts.JWT_EXPIRATION_TIME))
+                        .subject(user.getId().toString())
+                        .claim("email", user.getEmail())
+                        .audience()
+                        .add(Consts.JWT_AUDIENCE)
+                        .and()
+                        .id(kid)
+                        .signWith(key,alg)
+                        .compact();
+        return jws;
     }
 
     @Override
@@ -98,23 +144,85 @@ public class AuthServiceImpl implements AuthService {
         // Then manually update the audit fields with the new ID
         return updateUserAuditorFields(savedUser.getId());
     }
+@Override
+public User validateToken(String token)
+        throws InvalidTokenException, TokenExpiredException, UserNotFoundException {
 
+    Session session   = loadActiveSession(token);
+    Jws<Claims> jws   = parseAndVerifySignature(token);
+    Claims   claims   = jws.getPayload();
+    User      user    = session.getUser();
 
-    @Override
-    public User validateToken(String token)throws InvalidTokenException,TokenExpiredException,UserNotFoundException {
-        Optional<Session> optionalSession = sessionRepository.findSessionsByTokenEqualsAndStatusIs(token, SessionStatus.ACTIVE);
-        if(optionalSession.isEmpty()){
-            throw new InvalidTokenException("Invalid token");
+    verifyTimestamps(claims.getExpiration(), session.getExpiredAt());
+    verifyClaim(claims.get("email"),    user.getEmail(),   "email");
+    verifyAudience(claims.getAudience());
+    verifyIssuer(claims.getIssuer());
+    verifySubject(claims.getSubject(),  user.getId().toString());
+    verifyJwtRecordExists(claims.getId());
+
+    return user;
+}
+
+    private Session loadActiveSession(String token) throws InvalidTokenException, TokenExpiredException {
+        return sessionRepository
+                .findSessionsByTokenEqualsAndStatusIs(token, SessionStatus.ACTIVE)
+                .filter(s -> !s.isDeleted())
+                .filter(s -> !s.getExpiredAt().before(new Date()))
+                .orElseThrow(() -> new InvalidTokenException("Invalid or expired session"));
+    }
+
+    private Jws<Claims> parseAndVerifySignature(String token) throws InvalidTokenException {
+        try {
+            JwtParser parser = Jwts.parser()
+                    .keyLocator(keyLocator)
+                    .build();
+            return parser.parseSignedClaims(token);
+        } catch (JwtException e) {
+            throw new InvalidTokenException("Invalid token signature");
         }
-        Session session = optionalSession.get();
-        if(session.getExpiredAt().before(new Date())){
+    }
+
+    private void verifyTimestamps(Date jwtExpiry, Date sessionExpiry) throws TokenExpiredException {
+        Date now = new Date();
+        if (jwtExpiry.before(now) || sessionExpiry.before(now)) {
             throw new TokenExpiredException("Token expired");
         }
-        User user = session.getUser();
-        if(user == null){
-            throw new UserNotFoundException("User not found");
+    }
+
+    private void verifyClaim(Object actual, String expected, String name) throws InvalidTokenException {
+        if (actual == null || !actual.equals(expected)) {
+            throw new InvalidTokenException("Invalid " + name);
         }
-        return user;
+    }
+
+    private void verifyAudience(Set<String> audience) throws InvalidTokenException {
+        if (!(audience.size() ==1) && !audience.contains(Consts.JWT_AUDIENCE)) {
+            throw new InvalidTokenException("Invalid audience");
+        }
+    }
+
+    private void verifyIssuer(String issuer) throws InvalidTokenException {
+        if (!Consts.JWT_ISSUER.equals(issuer)) {
+            throw new InvalidTokenException("Invalid issuer");
+        }
+    }
+
+    private void verifySubject(String subject, String expectedSub) throws InvalidTokenException {
+        if (!expectedSub.equals(subject)) {
+            throw new InvalidTokenException("Invalid subject");
+        }
+    }
+
+    private void verifyJwtRecordExists(String jti) throws InvalidTokenException {
+        UUID uuid;
+        try {
+            uuid=UUID.fromString(jti);
+        } catch (IllegalArgumentException e) {
+            throw new InvalidTokenException("Invalid jti");
+        }
+        if (jwtRepository.findById(uuid).isEmpty()) {
+            throw new InvalidTokenException("Unknown jti");
+        }
     }
 
     @Override
@@ -132,6 +240,15 @@ public class AuthServiceImpl implements AuthService {
             if(!user.getEmail().equals(email)){
                 throw new InvalidCredentialsException("Token does not belong to the user");
             }
+
+            User userFromValidatedtoken = validateToken(token);
+            if(userFromValidatedtoken == null){
+                throw new InvalidTokenException("Invalid token");
+            }
+            if(!userFromValidatedtoken.getId().equals(user.getId()) || !userFromValidatedtoken.getEmail().equals(user.getEmail())){
+                throw new InvalidCredentialsException("Token does not belong to the user");
+            }
+
             session.setDeleted(true);
             session.setStatus(SessionStatus.LOGGED_OUT);
             sessionRepository.save(session);
