@@ -13,6 +13,8 @@ import java.security.Key;
 import java.util.Base64;
 import java.util.UUID;
 
+import static com.vibevault.userservice.services.Consts.JWT_SECRET_ALGORITHM;
+
 @Service
 public class KeyLocatorImpl extends LocatorAdapter<Key> {
     private JWTRepository jwtRepository;
@@ -46,9 +48,8 @@ public class KeyLocatorImpl extends LocatorAdapter<Key> {
             // Consider logging this event
             throw new MalformedJwtException("Could not decode Base64 secret for kid: " + kid, e);
         }
-        MacAlgorithm algorithm = Jwts.SIG.HS512; // Assuming HS512 was used for signing
 
         // Use the JCA algorithm name obtained via getJcaName()
-        return new SecretKeySpec(secretBytes, "HmacSHA512");
+        return new SecretKeySpec(secretBytes, JWT_SECRET_ALGORITHM);
     }
 }

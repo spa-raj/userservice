@@ -11,6 +11,7 @@ import com.vibevault.userservice.repositories.SessionRepository;
 import com.vibevault.userservice.repositories.UserRepository;
 import com.vibevault.userservice.services.utils.ClientInfo;
 import io.jsonwebtoken.*;
+import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.MacAlgorithm;
 import org.apache.tomcat.util.bcel.Const;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +20,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import java.security.Key;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 
 @Service
@@ -83,12 +87,47 @@ public class AuthServiceImpl implements AuthService {
 
     private String getJWT(User user) {
         MacAlgorithm alg = Jwts.SIG.HS512;
-        SecretKey key = alg.key().build();
+        SecretKey key=null;
+        String kid=null;
 
-        JWT jwtRecord = new JWT();
-        jwtRecord.setSecret(Base64.getEncoder().encodeToString(key.getEncoded()));
-        JWT savedJwt = jwtRepository.save(jwtRecord);
-        String kid = savedJwt.getId().toString();
+        Optional<JWT> optionalJWT = jwtRepository.findTopByUser_IdEqualsAndDeletedEquals(user.getId(),false);
+
+        boolean createNewKey = true;
+        if (optionalJWT.isPresent()) {
+            JWT existingJwt = optionalJWT.get();
+            Instant keyCreationTime = existingJwt.getCreatedAt().toInstant();
+            Instant now = Instant.now();
+
+            if (Duration.between(keyCreationTime, now).toDays() < Consts.JWT_SECRET_EXPIRATION_TIME_IN_DAYS) {
+                try {
+                    byte[] decodedKey = Base64.getDecoder().decode(existingJwt.getSecret());
+                    key = Keys.hmacShaKeyFor(decodedKey);
+                    kid = existingJwt.getId().toString();
+                    createNewKey = false;
+                } catch (IllegalArgumentException e) {
+                    System.err.println("Error decoding existing key, creating a new one: " + e.getMessage());
+                }
+            }
+        }
+        if(createNewKey) {
+            List<JWT> oldActiveJwts = jwtRepository.findAllByUser_IdAndDeletedIs(user.getId(), false);
+            for (JWT oldJwt : oldActiveJwts) {
+                oldJwt.setDeleted(true);
+            }
+            if (!oldActiveJwts.isEmpty()) {
+                jwtRepository.saveAll(oldActiveJwts);
+            }
+
+            key = alg.key().build();
+            JWT jwtRecord = new JWT();
+            jwtRecord.setSecret(Base64.getEncoder().encodeToString(key.getEncoded()));
+            jwtRecord.setUser(user);
+            jwtRecord.setCreatedAt(new Date());
+            jwtRecord.setDeleted(false);
+
+            JWT savedJwt = jwtRepository.save(jwtRecord);
+            kid = savedJwt.getId().toString();
+        }
 
         String jws = Jwts.builder()
                         .header().keyId(kid)
