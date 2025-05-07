@@ -12,6 +12,7 @@ import com.vibevault.userservice.repositories.UserRepository;
 import com.vibevault.userservice.services.utils.ClientInfo;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+
 import io.jsonwebtoken.security.MacAlgorithm;
 import org.apache.tomcat.util.bcel.Const;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +25,7 @@ import javax.crypto.spec.SecretKeySpec;
 import java.security.Key;
 import java.time.Duration;
 import java.time.Instant;
+
 import java.util.*;
 
 @Service

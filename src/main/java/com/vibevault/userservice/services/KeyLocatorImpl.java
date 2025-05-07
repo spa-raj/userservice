@@ -51,5 +51,6 @@ public class KeyLocatorImpl extends LocatorAdapter<Key> {
 
         // Use the JCA algorithm name obtained via getJcaName()
         return new SecretKeySpec(secretBytes, JWT_SECRET_ALGORITHM);
+
     }
 }
