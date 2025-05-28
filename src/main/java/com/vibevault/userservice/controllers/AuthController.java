@@ -1,8 +1,10 @@
 package com.vibevault.userservice.controllers;
 
 import com.vibevault.userservice.dtos.*;
+import com.vibevault.userservice.models.Role;
 import com.vibevault.userservice.models.Session;
 import com.vibevault.userservice.models.User;
+import com.vibevault.userservice.models.UserRole;
 import com.vibevault.userservice.services.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -28,18 +30,22 @@ public class AuthController {
 
     @PostMapping("/signup")
     public ResponseEntity<SignupResponseDto> signup(@RequestBody SignupRequestDto signupRequestDto){
-        User user = authService.signup(signupRequestDto.getEmail(),
+        UserRole userRole = authService.signup(signupRequestDto.getEmail(),
                 signupRequestDto.getPassword(),
                 signupRequestDto.getName(),
-                signupRequestDto.getPhone());
+                signupRequestDto.getPhone(),
+                signupRequestDto.getRole());
 
-        if(user == null) {
+        if(userRole == null) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
+        User user = userRole.getUser();
+        Role role = userRole.getRole();
         SignupResponseDto signupResponseDto = new SignupResponseDto();
         signupResponseDto.setName(user.getFirstName()+" "+user.getLastName());
         signupResponseDto.setUserEmail(user.getEmail());
         signupResponseDto.setPhone(user.getPhoneNumber());
+        signupResponseDto.setRole(role.toString());
 
         return new ResponseEntity<>(signupResponseDto, HttpStatus.CREATED);
     }

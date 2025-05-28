@@ -2,13 +2,8 @@ package com.vibevault.userservice.services;
 
 import com.vibevault.userservice.dtos.LoginResponseDto;
 import com.vibevault.userservice.exceptions.*;
-import com.vibevault.userservice.models.JWT;
-import com.vibevault.userservice.models.Session;
-import com.vibevault.userservice.models.SessionStatus;
-import com.vibevault.userservice.models.User;
-import com.vibevault.userservice.repositories.JWTRepository;
-import com.vibevault.userservice.repositories.SessionRepository;
-import com.vibevault.userservice.repositories.UserRepository;
+import com.vibevault.userservice.models.*;
+import com.vibevault.userservice.repositories.*;
 import com.vibevault.userservice.services.utils.ClientInfo;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
@@ -35,17 +30,23 @@ public class AuthServiceImpl implements AuthService {
     private PasswordEncoder passwordEncoder;
     private JWTRepository jwtRepository;
     private  KeyLocatorImpl keyLocator;
+    private RoleRepository roleRepository;
+    private UserRoleRepostitory userRoleRepostitory;
     @Autowired
     public AuthServiceImpl(UserRepository userRepository,
                            PasswordEncoder passwordEncoder,
                            SessionRepository sessionRepository,
                            JWTRepository jwtRepository,
-                           KeyLocatorImpl keyLocator) {
+                           KeyLocatorImpl keyLocator,
+                           RoleRepository roleRepository,
+                           UserRoleRepostitory userRoleRepostitory) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.sessionRepository = sessionRepository;
         this.jwtRepository = jwtRepository;
         this.keyLocator = keyLocator;
+        this.roleRepository = roleRepository;
+        this.userRoleRepostitory = userRoleRepostitory;
     }
     @Override
     public LoginResponseDto login(String email, String password)throws InvalidCredentialsException {
@@ -149,7 +150,8 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public User signup(String email, String password, String name, String phone)throws EmptyEmailException, EmptyPasswordException, EmptyPhoneException, EmailAlreadyExistsException, PhoneAlreadyExistsException, UserNotFoundException {
+    @Transactional
+    public UserRole signup(String email, String password, String name, String phone,String role)throws EmptyEmailException, EmptyPasswordException, EmptyPhoneException, EmailAlreadyExistsException, PhoneAlreadyExistsException, UserNotFoundException, EmptyRoleException {
         if (email == null || email.isEmpty()) {
             throw new EmptyEmailException("Email cannot be empty");
         }
@@ -181,9 +183,20 @@ public class AuthServiceImpl implements AuthService {
         user.setPhoneNumber(phone);
 
         User savedUser = userRepository.save(user);
-
+        if(role == null || role.isEmpty()) {
+            throw new EmptyRoleException("Role cannot be empty");
+        }
+        Optional<Role> optionalRole = roleRepository.findByName(role);
+        if(optionalRole.isEmpty()){
+            throw new RoleNotFoundException("Role not found: " + role);
+        }
+        Role userRole = optionalRole.get();
+        UserRole userRoleEntity = new UserRole();
+        userRoleEntity.setUser(updateUserAuditorFields(savedUser.getId()));
+        userRoleEntity.setRole(userRole);
+        UserRole savedUserRole = userRoleRepostitory.save(userRoleEntity);
         // Then manually update the audit fields with the new ID
-        return updateUserAuditorFields(savedUser.getId());
+        return savedUserRole;
     }
 @Override
 public User validateToken(String token)
