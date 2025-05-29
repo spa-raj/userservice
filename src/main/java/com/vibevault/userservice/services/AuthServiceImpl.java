@@ -9,15 +9,12 @@ import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 
 import io.jsonwebtoken.security.MacAlgorithm;
-import org.apache.tomcat.util.bcel.Const;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
-import java.security.Key;
 import java.time.Duration;
 import java.time.Instant;
 
@@ -31,7 +28,7 @@ public class AuthServiceImpl implements AuthService {
     private JWTRepository jwtRepository;
     private  KeyLocatorImpl keyLocator;
     private RoleRepository roleRepository;
-    private UserRoleRepostitory userRoleRepostitory;
+    private UserRoleRepository userRoleRepository;
     @Autowired
     public AuthServiceImpl(UserRepository userRepository,
                            PasswordEncoder passwordEncoder,
@@ -39,14 +36,14 @@ public class AuthServiceImpl implements AuthService {
                            JWTRepository jwtRepository,
                            KeyLocatorImpl keyLocator,
                            RoleRepository roleRepository,
-                           UserRoleRepostitory userRoleRepostitory) {
+                           UserRoleRepository userRoleRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.sessionRepository = sessionRepository;
         this.jwtRepository = jwtRepository;
         this.keyLocator = keyLocator;
         this.roleRepository = roleRepository;
-        this.userRoleRepostitory = userRoleRepostitory;
+        this.userRoleRepository = userRoleRepository;
     }
     @Override
     public LoginResponseDto login(String email, String password)throws InvalidCredentialsException {
@@ -194,7 +191,7 @@ public class AuthServiceImpl implements AuthService {
         UserRole userRoleEntity = new UserRole();
         userRoleEntity.setUser(updateUserAuditorFields(savedUser.getId()));
         userRoleEntity.setRole(userRole);
-        UserRole savedUserRole = userRoleRepostitory.save(userRoleEntity);
+        UserRole savedUserRole = userRoleRepository.save(userRoleEntity);
         // Then manually update the audit fields with the new ID
         return savedUserRole;
     }
