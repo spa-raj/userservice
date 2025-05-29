@@ -5,7 +5,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.UUID;
 
-public interface UserRoleRepostitory extends JpaRepository<UserRole, UUID> {
+public interface UserRoleRepository extends JpaRepository<UserRole, UUID> {
     @Override
     <S extends UserRole> S save(S entity);
+    long countUserRoleByRole_Id(UUID roleId);
 }
