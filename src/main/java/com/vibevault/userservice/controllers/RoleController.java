@@ -1,10 +1,7 @@
 package com.vibevault.userservice.controllers;
 
 import com.vibevault.userservice.dtos.auth.UserDto;
-import com.vibevault.userservice.dtos.role.CreateRoleRequestDto;
-import com.vibevault.userservice.dtos.role.CreateRoleResponseDto;
-import com.vibevault.userservice.dtos.role.UpdateRoleRequestDto;
-import com.vibevault.userservice.dtos.role.UpdateRoleResponseDto;
+import com.vibevault.userservice.dtos.role.*;
 import com.vibevault.userservice.models.Role;
 import com.vibevault.userservice.models.User;
 import com.vibevault.userservice.models.UserRole;
@@ -88,6 +85,27 @@ public class RoleController {
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
+    }
+
+    @GetMapping("")
+    public ResponseEntity<List<GetRoleResponseDto>> getAllRoles(@RequestHeader("Authorization") String authToken) {
+        List<UserRole> userRole = authService.validateToken(authToken);
+        if (userRole == null || userRole.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+        for (UserRole ur : userRole) {
+            User user = ur.getUser();
+            Role role = ur.getRole();
+            if (role.getName().equals("ADMIN")) {
+                // Admin can view all roles
+                break;
+            } else {
+                // If the user is not an admin, return unauthorized
+                return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+            }
+        }
+        List<Role> roles = roleService.getAllRoles();
+        return new ResponseEntity<>(GetRoleResponseDto.fromRoles(roles), HttpStatus.OK);
     }
 
 }
