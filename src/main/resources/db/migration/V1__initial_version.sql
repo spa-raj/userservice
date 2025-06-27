@@ -51,7 +51,8 @@ CREATE TABLE sessions
 CREATE TABLE sessions_role
 (
     role_id     BINARY(16) NOT NULL,
-    sessions_id BINARY(16) NOT NULL
+    sessions_id BINARY(16) NOT NULL,
+    CONSTRAINT pk_sessions_role PRIMARY KEY (role_id, sessions_id)
 );
 
 CREATE TABLE user_profiles
