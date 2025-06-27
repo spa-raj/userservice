@@ -1,6 +1,7 @@
 package com.vibevault.userservice.advices;
 
-import com.vibevault.userservice.exceptions.*;
+import com.vibevault.userservice.exceptions.auth.*;
+import com.vibevault.userservice.exceptions.role.RoleAlreadyExistsException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -51,5 +52,9 @@ public class ExceptionAdvices {
     @ExceptionHandler(EmptyRoleException.class)
     public ResponseEntity<String> handleEmptyRoleException(EmptyRoleException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+    }
+    @ExceptionHandler(RoleAlreadyExistsException.class)
+    public ResponseEntity<String> handleRoleAlreadyExistsException(RoleAlreadyExistsException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
     }
 }

@@ -1,4 +1,4 @@
-package com.vibevault.userservice.dtos;
+package com.vibevault.userservice.dtos.auth;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -15,5 +15,5 @@ public class UserDto {
     private String email;
     private String name;
     private String phone;
-    private List<String> role;
+    private List<String> roles;
 }

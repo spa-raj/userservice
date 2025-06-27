@@ -1,18 +1,17 @@
-package com.vibevault.userservice.dtos;
+package com.vibevault.userservice.dtos.auth;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.List;
-
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class SignupResponseDto {
-    private String userEmail;
+public class SignupRequestDto {
+    private String email;
+    private String password;
     private String name;
     private String phone;
     private String role;

@@ -1,12 +1,10 @@
 package com.vibevault.userservice.models;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.Date;
+import java.util.List;
 
 @Entity(name = "sessions")
 @EqualsAndHashCode(callSuper = false)
@@ -17,6 +15,8 @@ import java.util.Date;
 public class Session extends BaseModel{
     @ManyToOne
     private User user;
+    @ManyToMany(fetch = FetchType.EAGER)
+    private List<Role> role;
     private String token;
     private String device;
     private String ipAddress;
