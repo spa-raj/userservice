@@ -37,8 +37,12 @@ public class RoleServiceImpl implements RoleService {
             throw new RoleNotFoundException("Role with ID " + roleId + " not found.");
         }
         Role roleToUpdate = existingRole.get();
-        roleToUpdate.setName(roleName);
-        roleToUpdate.setDescription(description);
+        if(roleName != null && !roleName.isEmpty() && !roleName.toUpperCase().equals(roleToUpdate.getName())) {
+            roleToUpdate.setName(roleName.toUpperCase());
+        }
+        if(description != null && !description.isEmpty() && !description.equals(roleToUpdate.getDescription())) {
+            roleToUpdate.setDescription(description);
+        }
         return roleRepository.save(roleToUpdate);
     }
 }
