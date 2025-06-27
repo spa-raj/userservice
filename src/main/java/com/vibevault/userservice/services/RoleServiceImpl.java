@@ -55,4 +55,13 @@ public class RoleServiceImpl implements RoleService {
         }
         return roles;
     }
+
+    @Override
+    public Role getRoleById(String roleId) {
+        Optional<Role> role = roleRepository.findById(UUID.fromString(roleId));
+        if (role.isEmpty()) {
+            throw new RoleNotFoundException("Role with ID " + roleId + " not found.");
+        }
+        return role.get();
+    }
 }

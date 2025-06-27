@@ -108,4 +108,30 @@ public class RoleController {
         return new ResponseEntity<>(GetRoleResponseDto.fromRoles(roles), HttpStatus.OK);
     }
 
+    @GetMapping("/{roleId}")
+    public ResponseEntity<GetRoleResponseDto> getRoleById(@PathVariable String roleId,
+                                                          @RequestHeader("Authorization") String authToken) {
+        List<UserRole> userRole = authService.validateToken(authToken);
+        if (userRole == null || userRole.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+        for (UserRole ur : userRole) {
+            User user = ur.getUser();
+            Role role = ur.getRole();
+            if (role.getName().equals("ADMIN")) {
+                // Admin can view roles by ID
+                break;
+            } else {
+                // If the user is not an admin, return unauthorized
+                return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+            }
+        }
+        Role role = roleService.getRoleById(roleId);
+        if (role != null) {
+            return new ResponseEntity<>(GetRoleResponseDto.fromRole(role), HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
 }
