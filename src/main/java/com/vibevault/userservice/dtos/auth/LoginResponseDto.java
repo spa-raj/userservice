@@ -1,4 +1,4 @@
-package com.vibevault.userservice.dtos;
+package com.vibevault.userservice.dtos.auth;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

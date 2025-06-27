@@ -1,4 +1,4 @@
-package com.vibevault.userservice.exceptions;
+package com.vibevault.userservice.exceptions.auth;
 
 public class InvalidTokenException extends RuntimeException {
     public InvalidTokenException(String message) {

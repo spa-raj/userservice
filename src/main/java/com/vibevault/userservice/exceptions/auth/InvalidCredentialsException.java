@@ -1,4 +1,4 @@
-package com.vibevault.userservice.exceptions;
+package com.vibevault.userservice.exceptions.auth;
 
 public class InvalidCredentialsException extends RuntimeException {
     public InvalidCredentialsException(String message) {

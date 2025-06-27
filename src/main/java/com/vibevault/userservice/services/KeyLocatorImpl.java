@@ -1,10 +1,9 @@
 package com.vibevault.userservice.services;
 
-import com.vibevault.userservice.exceptions.SigningKeyNotFoundException;
+import com.vibevault.userservice.exceptions.auth.SigningKeyNotFoundException;
 import com.vibevault.userservice.models.JWT;
 import com.vibevault.userservice.repositories.JWTRepository;
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.security.MacAlgorithm;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;

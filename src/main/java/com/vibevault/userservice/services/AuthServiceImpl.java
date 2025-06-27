@@ -1,7 +1,7 @@
 package com.vibevault.userservice.services;
 
-import com.vibevault.userservice.dtos.LoginResponseDto;
-import com.vibevault.userservice.exceptions.*;
+import com.vibevault.userservice.dtos.auth.LoginResponseDto;
+import com.vibevault.userservice.exceptions.auth.*;
 import com.vibevault.userservice.models.*;
 import com.vibevault.userservice.repositories.*;
 import com.vibevault.userservice.services.utils.ClientInfo;
@@ -56,7 +56,12 @@ public class AuthServiceImpl implements AuthService {
             throw new InvalidCredentialsException("Invalid credentials");
         }
 
-        Session session = createSession(user);
+        Optional<List<UserRole>> optionalUserRoleList = userRoleRepository.findUserRoleByUser_Id(user.getId());
+        if(optionalUserRoleList.isEmpty()) {
+               throw new InvalidUserException("User does not have a role assigned");
+        }
+        List<UserRole> userRoleList = optionalUserRoleList.get();
+        Session session = createSession(userRoleList);
         LoginResponseDto loginResponseDto = new LoginResponseDto();
         loginResponseDto.setToken(session.getToken());
         loginResponseDto.setSessionId(String.valueOf(session.getId()));
@@ -64,11 +69,29 @@ public class AuthServiceImpl implements AuthService {
         return loginResponseDto;
     }
 
-    private Session createSession(User user) {
+    private Session createSession(List<UserRole> userRoleList) {
         Session session = new Session();
-        session.setUser(user);
+        User user = userRoleList.getFirst().getUser();
+        if (user == null || user.getId() == null || user.isDeleted()) {
+            throw new UserNotFoundException("User not found");
+        }
 
-        String jws = getJWT(user);
+        List<Role> roles = new ArrayList<>();
+        for (UserRole userRole : userRoleList) {
+            Role role = userRole.getRole();
+            if (role != null && !role.isDeleted()) {
+                roles.add(role);
+            }
+        }
+
+        if (roles.isEmpty() || roles.stream().anyMatch(Role::isDeleted) || roles.stream().anyMatch(role -> role.getId() == null)) {
+            throw new RoleNotFoundException("Role not found");
+        }
+
+        session.setUser(user);
+        session.setRole(roles);
+
+        String jws = getJWT(userRoleList);
         session.setToken(jws);
         session.setDeleted(false);
 
@@ -85,7 +108,16 @@ public class AuthServiceImpl implements AuthService {
         return sessionRepository.save(session);
     }
 
-    private String getJWT(User user) {
+    private String getJWT(List<UserRole> userRoleList) {
+        User user = userRoleList.getFirst().getUser();
+        List<Role> roles = new ArrayList<>();
+        for (UserRole userRole : userRoleList) {
+            Role role = userRole.getRole();
+            if (role != null && !role.isDeleted()) {
+                roles.add(role);
+            }
+        }
+
         MacAlgorithm alg = Jwts.SIG.HS512;
         SecretKey key=null;
         String kid=null;
@@ -137,6 +169,9 @@ public class AuthServiceImpl implements AuthService {
                         .expiration(new Date(System.currentTimeMillis() + Consts.JWT_EXPIRATION_TIME))
                         .subject(user.getId().toString())
                         .claim("email", user.getEmail())
+                        .claim("roles", roles.stream()
+                                .map(Role::getName)
+                                .toList())
                         .audience()
                         .add(Consts.JWT_AUDIENCE)
                         .and()
@@ -196,13 +231,32 @@ public class AuthServiceImpl implements AuthService {
         return savedUserRole;
     }
 @Override
-public User validateToken(String token)
+public List<UserRole> validateToken(String token)
         throws InvalidTokenException, TokenExpiredException, UserNotFoundException {
 
     Session session   = loadActiveSession(token);
     Jws<Claims> jws   = parseAndVerifySignature(token);
     Claims   claims   = jws.getPayload();
     User      user    = session.getUser();
+    List<Role>      roles    = session.getRole();
+
+    if (user == null || user.getId() == null || user.isDeleted()) {
+        throw new UserNotFoundException("User not found");
+    }
+    if (roles == null || roles.isEmpty() || roles.stream().anyMatch(Role::isDeleted) || roles.stream().anyMatch(role -> role.getId() == null)) {
+        throw new RoleNotFoundException("Role not found");
+    }
+    Optional<List<UserRole>> optionalUserRoleList = userRoleRepository.findUserRoleByUser_Id(user.getId());
+    if (optionalUserRoleList.isEmpty()) {
+        throw new UserNotFoundException("User does not have a role assigned");
+    }
+    List<UserRole> userRoleList = optionalUserRoleList.get();
+    if (!userRoleList.stream().anyMatch(ur -> ur.getRole().getName().equals(roles.getFirst().getName()))) {
+        throw new InvalidTokenException("Token role does not match user role");
+    }
+    if (!session.getToken().equals(token)) {
+        throw new InvalidTokenException("Token does not match session token");
+    }
 
     verifyTimestamps(claims.getExpiration(), session.getExpiredAt());
     verifyClaim(claims.get("email"),    user.getEmail(),   "email");
@@ -210,8 +264,7 @@ public User validateToken(String token)
     verifyIssuer(claims.getIssuer());
     verifySubject(claims.getSubject(),  user.getId().toString());
     verifyJwtRecordExists(claims.getId());
-
-    return user;
+    return userRoleList;
 }
 
     private Session loadActiveSession(String token) throws InvalidTokenException, TokenExpiredException {
@@ -292,7 +345,9 @@ public User validateToken(String token)
                 throw new InvalidCredentialsException("Token does not belong to the user");
             }
 
-            User userFromValidatedtoken = validateToken(token);
+            List<UserRole> userRoleListFromValidatedToken = validateToken(token);
+
+            User userFromValidatedtoken = userRoleListFromValidatedToken.getFirst().getUser();
             if(userFromValidatedtoken == null){
                 throw new InvalidTokenException("Invalid token");
             }

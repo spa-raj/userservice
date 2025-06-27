@@ -1,8 +1,7 @@
 package com.vibevault.userservice.controllers;
 
-import com.vibevault.userservice.dtos.*;
+import com.vibevault.userservice.dtos.auth.*;
 import com.vibevault.userservice.models.Role;
-import com.vibevault.userservice.models.Session;
 import com.vibevault.userservice.models.User;
 import com.vibevault.userservice.models.UserRole;
 import com.vibevault.userservice.services.AuthService;
@@ -15,8 +14,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.List;
 
 @RestController
 @RequestMapping("/auth")
@@ -71,7 +69,15 @@ public class AuthController {
     @PostMapping("/validate")
     public ResponseEntity<UserDto> validateToken(@RequestHeader("Authorization") String token){
         // Validate the token
-        User user = authService.validateToken(token);
+        List<UserRole> userRoleList = authService.validateToken(token);
+        User user = userRoleList.getFirst().getUser();
+        if(userRoleList == null || userRoleList.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+        List<Role> roles = userRoleList.stream()
+                .map(UserRole::getRole)
+                .toList();
+
         if(user == null) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
@@ -79,6 +85,9 @@ public class AuthController {
         userDto.setEmail(user.getEmail());
         userDto.setName(user.getFirstName() + " " + user.getLastName());
         userDto.setPhone(user.getPhoneNumber());
+        userDto.setRoles(roles.stream()
+                .map(Role::getName)
+                .toList());
         return new ResponseEntity<>(userDto, HttpStatus.ACCEPTED);
     }
 

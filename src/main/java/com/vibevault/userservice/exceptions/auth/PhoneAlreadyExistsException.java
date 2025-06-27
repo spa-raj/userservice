@@ -1,4 +1,4 @@
-package com.vibevault.userservice.exceptions;
+package com.vibevault.userservice.exceptions.auth;
 
 public class PhoneAlreadyExistsException extends RuntimeException {
     public PhoneAlreadyExistsException(String message) {

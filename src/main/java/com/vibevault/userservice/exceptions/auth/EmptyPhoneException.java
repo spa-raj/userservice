@@ -1,4 +1,4 @@
-package com.vibevault.userservice.exceptions;
+package com.vibevault.userservice.exceptions.auth;
 
 public class EmptyPhoneException extends RuntimeException {
     public EmptyPhoneException(String message) {

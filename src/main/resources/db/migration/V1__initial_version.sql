@@ -48,6 +48,12 @@ CREATE TABLE sessions
     CONSTRAINT pk_sessions PRIMARY KEY (id)
 );
 
+CREATE TABLE sessions_role
+(
+    role_id     BINARY(16) NOT NULL,
+    sessions_id BINARY(16) NOT NULL
+);
+
 CREATE TABLE user_profiles
 (
     id               BINARY(16)   NOT NULL,
@@ -120,3 +126,9 @@ ALTER TABLE user_roles
 
 ALTER TABLE user_roles
     ADD CONSTRAINT FK_USER_ROLES_ON_USER FOREIGN KEY (user_id) REFERENCES users (id);
+
+ALTER TABLE sessions_role
+    ADD CONSTRAINT fk_sesrol_on_role FOREIGN KEY (role_id) REFERENCES roles (id);
+
+ALTER TABLE sessions_role
+    ADD CONSTRAINT fk_sesrol_on_session FOREIGN KEY (sessions_id) REFERENCES sessions (id);

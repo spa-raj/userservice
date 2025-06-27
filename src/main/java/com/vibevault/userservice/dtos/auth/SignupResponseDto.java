@@ -1,4 +1,4 @@
-package com.vibevault.userservice.dtos;
+package com.vibevault.userservice.dtos.auth;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -9,9 +9,8 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class SignupRequestDto {
-    private String email;
-    private String password;
+public class SignupResponseDto {
+    private String userEmail;
     private String name;
     private String phone;
     private String role;
