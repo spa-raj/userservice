@@ -36,17 +36,11 @@ public class RoleController {
         if (userRole == null || userRole.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
-        for (UserRole ur : userRole) {
-            User user = ur.getUser();
-            Role role = ur.getRole();
-            if (role.getName().equals("ADMIN")) {
-                // Admin can create roles
-                break;
-            } else {
-                // If the user is not an admin, return unauthorized
-                return new ResponseEntity<>(HttpStatus.FORBIDDEN);
-            }
+        if(userRole.stream().noneMatch(ur -> ur.getRole().getName().equals("ADMIN"))){
+            // If the user is not an admin, return unauthorized
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
+
         Role role = roleService.createRole(createRoleRequestDto.getRoleName(),createRoleRequestDto.getDescription());
         CreateRoleResponseDto responseDto = new CreateRoleResponseDto();
         if (role != null) {
@@ -67,17 +61,11 @@ public class RoleController {
         if (userRole == null || userRole.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
-        for (UserRole ur : userRole) {
-            User user = ur.getUser();
-            Role role = ur.getRole();
-            if (role.getName().equals("ADMIN")) {
-                // Admin can update roles
-                break;
-            } else {
-                // If the user is not an admin, return unauthorized
-                return new ResponseEntity<>(HttpStatus.FORBIDDEN);
-            }
+        if(userRole.stream().noneMatch(ur -> ur.getRole().getName().equals("ADMIN"))){
+            // If the user is not an admin, return unauthorized
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
+
         Role updatedRole = roleService.updateRole(roleId, updateRoleRequestDto.getRoleName(), updateRoleRequestDto.getDescription());
         UpdateRoleResponseDto updateRoleResponseDto;
         if (updatedRole != null) {
@@ -95,17 +83,11 @@ public class RoleController {
         if (userRole == null || userRole.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
-        for (UserRole ur : userRole) {
-            User user = ur.getUser();
-            Role role = ur.getRole();
-            if (role.getName().equals("ADMIN")) {
-                // Admin can view all roles
-                break;
-            } else {
-                // If the user is not an admin, return unauthorized
-                return new ResponseEntity<>(HttpStatus.FORBIDDEN);
-            }
+        if(userRole.stream().noneMatch(ur -> ur.getRole().getName().equals("ADMIN"))){
+            // If the user is not an admin, return unauthorized
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
+
         List<Role> roles = roleService.getAllRoles();
         return new ResponseEntity<>(GetRoleResponseDto.fromRoles(roles), HttpStatus.OK);
     }
@@ -117,16 +99,9 @@ public class RoleController {
         if (userRole == null || userRole.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
-        for (UserRole ur : userRole) {
-            User user = ur.getUser();
-            Role role = ur.getRole();
-            if (role.getName().equals("ADMIN")) {
-                // Admin can view roles by ID
-                break;
-            } else {
-                // If the user is not an admin, return unauthorized
-                return new ResponseEntity<>(HttpStatus.FORBIDDEN);
-            }
+        if(userRole.stream().noneMatch(ur -> ur.getRole().getName().equals("ADMIN"))){
+            // If the user is not an admin, return unauthorized
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
         Role role = roleService.getRoleById(roleId);
         if (role != null) {
