@@ -70,8 +70,11 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private Session createSession(List<UserRole> userRoleList) {
+        if (userRoleList == null || userRoleList.isEmpty()) {
+            throw new UserNotFoundException("User role list is empty or null");
+        }
         Session session = new Session();
-        User user = userRoleList.getFirst().getUser();
+        User user = userRoleList.get(0).getUser();
         if (user == null || user.getId() == null || user.isDeleted()) {
             throw new UserNotFoundException("User not found");
         }
