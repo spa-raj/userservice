@@ -7,6 +7,7 @@ import com.vibevault.userservice.repositories.RoleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -37,8 +38,30 @@ public class RoleServiceImpl implements RoleService {
             throw new RoleNotFoundException("Role with ID " + roleId + " not found.");
         }
         Role roleToUpdate = existingRole.get();
-        roleToUpdate.setName(roleName);
-        roleToUpdate.setDescription(description);
+        if(roleName != null && !roleName.isEmpty() && !roleName.toUpperCase().equals(roleToUpdate.getName())) {
+            roleToUpdate.setName(roleName.toUpperCase());
+        }
+        if(description != null && !description.isEmpty() && !description.equals(roleToUpdate.getDescription())) {
+            roleToUpdate.setDescription(description);
+        }
         return roleRepository.save(roleToUpdate);
+    }
+
+    @Override
+    public List<Role> getAllRoles() {
+        List<Role> roles = roleRepository.findAll();
+        if (roles.isEmpty()) {
+            throw new RoleNotFoundException("No roles found.");
+        }
+        return roles;
+    }
+
+    @Override
+    public Role getRoleById(String roleId) {
+        Optional<Role> role = roleRepository.findById(UUID.fromString(roleId));
+        if (role.isEmpty()) {
+            throw new RoleNotFoundException("Role with ID " + roleId + " not found.");
+        }
+        return role.get();
     }
 }
