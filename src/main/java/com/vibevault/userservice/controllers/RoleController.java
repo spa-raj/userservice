@@ -2,6 +2,8 @@ package com.vibevault.userservice.controllers;
 
 import com.vibevault.userservice.dtos.auth.UserDto;
 import com.vibevault.userservice.dtos.role.*;
+import com.vibevault.userservice.dtos.role.CreateRoleRequestDto;
+import com.vibevault.userservice.dtos.role.CreateRoleResponseDto;
 import com.vibevault.userservice.models.Role;
 import com.vibevault.userservice.models.User;
 import com.vibevault.userservice.models.UserRole;
