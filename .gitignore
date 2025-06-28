@@ -34,3 +34,6 @@ build/
 
 ## Spring boot project configurations##
 .run
+
+## Qodo configurations ##
+.qodo/
