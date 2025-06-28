@@ -9,6 +9,7 @@ import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 
 import io.jsonwebtoken.security.MacAlgorithm;
+import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -21,8 +22,9 @@ import java.time.Instant;
 import java.util.*;
 
 @Service
+@NoArgsConstructor
 public class AuthServiceImpl implements AuthService {
-    private final SessionRepository sessionRepository;
+    private SessionRepository sessionRepository;
     private UserRepository userRepository;
     private PasswordEncoder passwordEncoder;
     private JWTRepository jwtRepository;
@@ -111,7 +113,7 @@ public class AuthServiceImpl implements AuthService {
         return sessionRepository.save(session);
     }
 
-    private String getJWT(List<UserRole> userRoleList) {
+    String getJWT(List<UserRole> userRoleList) {
         User user = userRoleList.getFirst().getUser();
         List<Role> roles = new ArrayList<>();
         for (UserRole userRole : userRoleList) {
@@ -278,7 +280,7 @@ public List<UserRole> validateToken(String token)
                 .orElseThrow(() -> new InvalidTokenException("Invalid or expired session"));
     }
 
-    private Jws<Claims> parseAndVerifySignature(String token) throws InvalidTokenException {
+    Jws<Claims> parseAndVerifySignature(String token) throws InvalidTokenException {
         try {
             JwtParser parser = Jwts.parser()
                     .keyLocator(keyLocator)
