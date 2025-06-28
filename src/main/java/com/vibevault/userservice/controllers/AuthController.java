@@ -70,10 +70,12 @@ public class AuthController {
     public ResponseEntity<UserDto> validateToken(@RequestHeader("Authorization") String token){
         // Validate the token
         List<UserRole> userRoleList = authService.validateToken(token);
-        User user = userRoleList.getFirst().getUser();
+
         if(userRoleList == null || userRoleList.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
+
+        User user = userRoleList.getFirst().getUser();
         List<Role> roles = userRoleList.stream()
                 .map(UserRole::getRole)
                 .toList();
