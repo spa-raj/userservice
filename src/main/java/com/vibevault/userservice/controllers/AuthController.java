@@ -90,7 +90,7 @@ public class AuthController {
         userDto.setRoles(roles.stream()
                 .map(Role::getName)
                 .toList());
-        return new ResponseEntity<>(userDto, HttpStatus.ACCEPTED);
+        return new ResponseEntity<>(userDto, HttpStatus.OK);
     }
 
     @PostMapping("/logout")
