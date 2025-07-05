@@ -12,6 +12,7 @@
   - [Role Management](#role-management)
 - [Database Migrations](#database-migrations)
 - [License](#license)
+- [Testing](#testing)
 
 ## Overview
 User Service is a Spring Boot application designed to manage user authentication, authorization, and role-based access control.
@@ -237,3 +238,18 @@ Flyway is used for managing database schema migrations. Migration scripts are lo
 
 ## License
 This project is licensed under the Apache-2.0 License. See the LICENSE file for details.
+
+## Testing
+
+The application includes comprehensive unit and integration tests to ensure functionality and reliability. Below are the key testing points:
+
+### Controller Tests
+- **AuthControllerTest**: Validates authentication endpoints such as signup, login, logout, and token validation.
+- **AuthControllerMVCTest**: Performs mock MVC tests for authentication endpoints.
+- **RoleControllerTest**: Tests role management endpoints including role creation and updates.
+- **RoleControllerMVCTest**: Performs mock MVC tests for role management endpoints.
+
+### Service Tests
+- **AuthServiceTest**: Tests the authentication service logic, including token generation and validation.
+- **KeyLocatorImplTest**: Validates the key locator implementation used for JWT operations.
+- **RoleServiceTest**: Tests the role service logic, including role creation and updates.
