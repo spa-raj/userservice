@@ -20,9 +20,11 @@ It provides APIs for user signup, login, logout, and role management. The servic
 It uses the jjwt library for token generation and validation (GitHub repository: [jjwt](https://github.com/jwtk/jjwt)), and Flyway for database migrations.
 
 ## Features
+- User registration and login
 - User authentication and authorization
-- Role-based access control
 - Token validation
+- User logout
+- Role-based access control
 - Admin functionalities for role management
 
 ## Technologies Used
@@ -104,7 +106,6 @@ It uses the jjwt library for token generation and validation (GitHub repository:
   - Request Body:
     ```json
     {
-      "status": "200",
       "email":"rohit2@gmail.com",
       "password":"abc@1234"
     }
