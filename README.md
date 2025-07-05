@@ -1,8 +1,22 @@
 # User Service
 
+## Table of Contents
+- [Overview](#overview)
+- [Features](#features)
+- [Technologies Used](#technologies-used)
+- [Setup Instructions](#setup-instructions)
+  - [Prerequisites](#prerequisites)
+  - [Steps](#steps)
+- [API Endpoints](#api-endpoints)
+  - [Authentication](#authentication)
+  - [Role Management](#role-management)
+- [Database Migrations](#database-migrations)
+- [License](#license)
+
 ## Overview
 User Service is a Spring Boot application designed to manage user authentication, authorization, and role-based access control.
 It provides APIs for user signup, login, logout, and role management. The service uses JWT for token-based authentication and supports admin functionalities for managing user roles.
+It uses the jjwt library for token generation and validation (GitHub repository: [jjwt](https://github.com/jwtk/jjwt)), and Flyway for database migrations.
 
 ## Features
 - User authentication and authorization
