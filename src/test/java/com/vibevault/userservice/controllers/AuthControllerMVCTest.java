@@ -152,7 +152,7 @@ public class AuthControllerMVCTest {
 
         mockMvc.perform(post("/auth/validate")
                         .header("Authorization", token))
-                .andExpect(status().isAccepted())
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email").value("john.doe@example.com"))
                 .andExpect(jsonPath("$.name").value("John Doe"))
                 .andExpect(jsonPath("$.phone").value("1234567890"))
