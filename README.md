@@ -59,7 +59,7 @@ It uses the jjwt library for token generation and validation (GitHub repository:
      spring.datasource.username=root
      spring.datasource.password=yourpassword
      spring.application.name=userservice
-     server.port=8080
+     server.port=8081
      spring.jpa.hibernate.ddl-auto=validate
      spring.jpa.show-sql=true
      spring.flyway.enabled=true
