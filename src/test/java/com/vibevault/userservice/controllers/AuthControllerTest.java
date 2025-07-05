@@ -100,7 +100,7 @@ class AuthControllerTest {
 
         ResponseEntity<UserDto> response = authController.validateToken(token);
 
-        assertEquals(HttpStatus.ACCEPTED, response.getStatusCode());
+        assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("jane@example.com", response.getBody().getEmail());
         assertEquals("Jane Smith", response.getBody().getName());
