@@ -1,37 +1,225 @@
-# **User Management Service**
-User Management Service for my Ecommerce backend application "Vibe vault".
+# User Service
 
+## Overview
+User Service is a Spring Boot application designed to manage user authentication, authorization, and role-based access control.
+It provides APIs for user signup, login, logout, and role management. The service uses JWT for token-based authentication and supports admin functionalities for managing user roles.
 
-## SessionStatus Enum Values and Use Cases
+## Features
+- User authentication and authorization
+- Role-based access control
+- Token validation
+- Admin functionalities for role management
 
-The `SessionStatus` enum represents different states of authentication tokens in the user service. Here's what each status means:
+## Technologies Used
+- Java
+- Spring Boot
+- Spring Security
+- Hibernate
+- Flyway for database migrations
+- MySQL
 
-### ACTIVE
-- A valid, currently usable token
-- User is properly authenticated
-- All protected resources can be accessed
-- Default status when a user successfully logs in
+## Setup Instructions
 
-### INACTIVE
-- Token exists but is temporarily not usable
-- May indicate account suspension or system maintenance
-- Could be used when a session is paused due to inactivity but could be reactivated
-- Prevents access without completely terminating the session
+### Prerequisites
+- Java 17 or higher
+- Maven
+- MySQL database
 
-### EXPIRED
-- Token has reached its time limit (expiredAt date)
-- Natural end-of-life for tokens that weren't explicitly logged out
-- Requires the user to authenticate again
-- Security measure to limit the window of opportunity for token misuse
+### Steps
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/spa-raj/userservice.git
+   ```
+2. Navigate to the project directory:
+   ```bash
+   cd userservice
+   ```
+3. Configure the database and environment variables:
+   - Update `application.properties` with your database credentials and other environment variables.
+   - Example:
+     ```properties
+     spring.datasource.url=jdbc:mysql://localhost:3306/userservice
+     spring.datasource.username=root
+     spring.datasource.password=yourpassword
+     spring.application.name=userservice
+     server.port=8080
+     spring.jpa.hibernate.ddl-auto=validate
+     spring.jpa.show-sql=true
+     spring.flyway.enabled=true
+     spring.flyway.locations=classpath:db/migration
+     admin.email=admin@example.com
+     admin.password=adminpassword
+     ```
+4. Run Flyway migrations:
+   ```bash
+   mvn flyway:migrate
+   ```
+5. Build and run the application:
+   ```bash
+   mvn spring-boot:run
+   ```
 
-### BLACKLISTED
-- Token has been explicitly invalidated due to security concerns
-- Used when suspicious activity is detected
-- Can indicate potential compromised credentials
-- Prevents any further use regardless of expiration date
+## API Endpoints
 
-### LOGGED_OUT
-- User has explicitly terminated their session
-- Result of calling the logout endpoint
-- Clean session termination
-- Distinguishes from other invalidation reasons for auditing purposes
+### Authentication
+- **POST /auth/signup**
+  - Description: Register a new user.
+  - Request Body:
+    ```json
+    {
+      "email":"rohit2@gmail.com",
+      "name": "Rohit",
+      "password":"abc@1234",
+      "phone":"8585445435",
+      "role":"seller"
+    }
+    ```
+  - Response:
+    ```json
+    {
+      "userEmail": "rohit2@gmail.com",
+      "name": "Rohit ",
+      "phone": "8585445435",
+      "role": "Role{name='SELLER', description='The seller/merchant of our products.'}"
+    }
+    ```
+
+- **POST /auth/login**
+  - Description: Authenticate a user and return a token.
+  - Request Body:
+    ```json
+    {
+      "status": "200",
+      "email":"rohit2@gmail.com",
+      "password":"abc@1234"
+    }
+    ```
+  - Response:
+    ```json
+    {
+      "status": 200,
+      "token": "eyJraWQiOiIyMmNiZjZlZS1ij......",
+      "sessionId": "fc4f9769-6683-412a-9865-a094a7a2151e"
+    }
+    ```
+
+- **POST /auth/logout**
+  - Description: Logout a user and invalidate the token.
+  - Request Body:
+    ```json
+    {
+      "userEmail": "rohit2@gmail.com",
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+    }
+    ```
+  - Response:
+    ```json
+    {
+      "status": 204,
+      "message": "No Content"
+    }
+    ```
+
+- **POST /auth/validate**
+  - Description: Validate a user's token.
+  - Request Headers:
+    ```json
+    {
+      "Authorization": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+    }
+    ```
+  - Response:
+    ```json
+    {
+      "status": 200,
+      "email": "rohit2@gmail.com",
+      "name": "Rohit ",
+      "phone": "8585445435",
+      "roles": [
+        "SELLER"
+      ]
+    }
+    ```
+
+### Role Management
+- **POST /roles/create**
+  - Description: Create a new role (Only Admins can create a new role).
+  - Request Body:
+    ```json
+    {
+      "roleName": "BUYER",
+      "description": "This role is for buyers who purchase products."
+    }
+    ```
+  - Response:
+    ```json
+    {
+      "status": 201,
+      "roleName": "BUYER",
+      "description": "This role is for buyers who purchase products.",
+      "message": "Role created successfully"
+    }
+    ```
+- **POST /roles/update**
+  - Description: Update an existing role (Only Admins can update a role).
+  - Request Body:
+    ```json
+    {
+      "roleName": "BUYER",
+      "description": "Updated description for the buyer role."
+    }
+    ```
+  - Response:
+    ```json
+    {
+      "status": 200,
+      "roleName": "BUYER",
+      "description": "Updated description for the buyer role.",
+      "message": "Role updated successfully"
+    }
+    ```
+    
+- **GET /roles**
+  - Description: Get all roles. (Only Admins can access this endpoint).
+    - Request Headers:
+      ```json
+      {
+        "Authorization": "eydsfbakfjjdsf...."
+      }
+      ```
+    - Response:
+      ```json
+        {
+            "status": 200,
+            "roles": [
+            {
+                "roleId": "fsad5sfsas....",
+                "name": "SELLER",
+                "description": "The seller/merchant of our products."
+            },
+            {
+                "roleId": "ghwafe412sa3w....",
+                "name": "BUYER",
+                "description": "This role is for buyers who purchase products."
+            }
+            ]
+        }
+      ```
+- **GET /roles/{roleId}**
+  - Description: Get details of a specific role by its ID (Only Admins can access this endpoint).
+  - Response:
+    ```json
+    {
+      "status": 200,
+      "role": {
+        "roleId": "fsad5sfsas....",
+        "name": "SELLER",
+        "description": "The seller/merchant of our products."
+      }
+    }
+    ```
+## Database Migrations
+Flyway is used for managing database schema migrations. Migration scripts are located in `src/main/resources/db/migration`.
+
+## License
+This project is licensed under the Apache-2.0 License. See the LICENSE file for details.
