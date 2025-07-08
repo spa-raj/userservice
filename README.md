@@ -12,6 +12,10 @@
   - [Role Management](#role-management)
 - [Database Migrations](#database-migrations)
 - [Testing](#testing)
+  - [Controller Tests](#controller-tests)
+  - [Service Tests](#service-tests)
+  - [Coverage Report](#coverage-report)
+- [References](#references)
 - [License](#license)
 
 ## Overview
@@ -249,8 +253,17 @@ The application includes comprehensive unit and integration tests to ensure func
 - **KeyLocatorImplTest**: Validates the key locator implementation used for JWT operations.
 - **RoleServiceTest**: Tests the role service logic, including role creation and updates.
 
+### Coverage Report
+To view the coverage report:
+1. Navigate to the `coverageReport` directory.
+2. Open the `index.html` file in a web browser.
+3. Explore the detailed coverage metrics for classes, methods, and lines.
+
 ## Database Migrations
 Flyway is used for managing database schema migrations. Migration scripts are located in `src/main/resources/db/migration`.
+
+## References
+- [JJWT Library](https://github.com/jwtk/jjwt)
 
 ## License
 This project is licensed under the Apache-2.0 License. See the LICENSE file for details.
