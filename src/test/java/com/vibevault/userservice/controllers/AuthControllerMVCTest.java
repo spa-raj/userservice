@@ -1,22 +1,22 @@
 package com.vibevault.userservice.controllers;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import com.vibevault.userservice.dtos.auth.LoginRequestDto;
 import com.vibevault.userservice.dtos.auth.LoginResponseDto;
 import com.vibevault.userservice.dtos.auth.LogoutRequestDto;
 import com.vibevault.userservice.dtos.auth.SignupRequestDto;
-import com.vibevault.userservice.dtos.auth.SignupResponseDto;
-import com.vibevault.userservice.dtos.auth.UserDto;
+
 import com.vibevault.userservice.models.Role;
 import com.vibevault.userservice.models.User;
 import com.vibevault.userservice.models.UserRole;
 import com.vibevault.userservice.services.AuthService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentMatchers;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -28,7 +28,8 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(value = AuthController.class, excludeAutoConfiguration = { SecurityAutoConfiguration.class })
+@WebMvcTest(AuthController.class)
+@AutoConfigureMockMvc(addFilters = false)
 public class AuthControllerMVCTest {
 
     @Autowired
@@ -38,7 +39,7 @@ public class AuthControllerMVCTest {
     private AuthService authService;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper jsonMapper;
 
     private User user;
     private Role role;
@@ -80,7 +81,7 @@ public class AuthControllerMVCTest {
 
         mockMvc.perform(post("/auth/signup")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(signupRequest)))
+                        .content(jsonMapper.writeValueAsString(signupRequest)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.name").value("John Doe"))
                 .andExpect(jsonPath("$.userEmail").value("john.doe@example.com"))
@@ -102,7 +103,7 @@ public class AuthControllerMVCTest {
 
         mockMvc.perform(post("/auth/signup")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(signupRequest)))
+                        .content(jsonMapper.writeValueAsString(signupRequest)))
                 .andExpect(status().isBadRequest());
     }
 
@@ -121,12 +122,12 @@ public class AuthControllerMVCTest {
 
         mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(loginRequest)))
+                        .content(jsonMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Authorization", "mock-token"))
                 .andExpect(header().string("Session-Id", "mock-session-id"))
                 .andExpect(jsonPath("$.token").value("mock-token"))
-                .andExpect(jsonPath("$.sessionId").value("mock-session-id"));
+                .andExpect(jsonPath("$.SessionId").value("mock-session-id"));
     }
 
     @Test
@@ -139,7 +140,7 @@ public class AuthControllerMVCTest {
 
         mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(loginRequest)))
+                        .content(jsonMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -179,7 +180,7 @@ public class AuthControllerMVCTest {
 
         mockMvc.perform(post("/auth/logout")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(logoutRequest)))
+                        .content(jsonMapper.writeValueAsString(logoutRequest)))
                 .andExpect(status().isNoContent());
     }
 }
