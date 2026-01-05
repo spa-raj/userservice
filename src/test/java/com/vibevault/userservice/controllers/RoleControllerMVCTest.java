@@ -1,19 +1,18 @@
 package com.vibevault.userservice.controllers;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import com.vibevault.userservice.dtos.role.CreateRoleRequestDto;
 import com.vibevault.userservice.dtos.role.UpdateRoleRequestDto;
 import com.vibevault.userservice.models.Role;
-import com.vibevault.userservice.models.User;
 import com.vibevault.userservice.models.UserRole;
 import com.vibevault.userservice.services.AuthService;
 import com.vibevault.userservice.services.RoleService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -25,7 +24,8 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(value = RoleController.class, excludeAutoConfiguration = { org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class })
+@WebMvcTest(RoleController.class)
+@AutoConfigureMockMvc(addFilters = false)
 public class RoleControllerMVCTest {
 
     @Autowired
@@ -38,7 +38,7 @@ public class RoleControllerMVCTest {
     private AuthService authService;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper jsonMapper;
 
     private static final String AUTH_HEADER = "Authorization";
     private static final String AUTH_TOKEN = "Bearer testtoken";
@@ -84,7 +84,7 @@ public class RoleControllerMVCTest {
         mockMvc.perform(post("/roles/create")
                 .header(AUTH_HEADER, AUTH_TOKEN)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestDto)))
+                .content(jsonMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.roleName").value("MODERATOR"))
                 .andExpect(jsonPath("$.description").value("Moderator role"))
@@ -102,7 +102,7 @@ public class RoleControllerMVCTest {
         mockMvc.perform(post("/roles/create")
                 .header(AUTH_HEADER, AUTH_TOKEN)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestDto)))
+                .content(jsonMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isForbidden());
     }
 
@@ -117,7 +117,7 @@ public class RoleControllerMVCTest {
         mockMvc.perform(post("/roles/create")
                 .header(AUTH_HEADER, AUTH_TOKEN)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestDto)))
+                .content(jsonMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -136,7 +136,7 @@ public class RoleControllerMVCTest {
         mockMvc.perform(post("/roles/update/{roleId}", ROLE_ID)
                 .header(AUTH_HEADER, AUTH_TOKEN)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestDto)))
+                .content(jsonMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.roleName").value("MODERATOR"))
                 .andExpect(jsonPath("$.description").value("Updated desc"))
@@ -152,7 +152,7 @@ public class RoleControllerMVCTest {
         mockMvc.perform(post("/roles/update/{roleId}", ROLE_ID)
                 .header(AUTH_HEADER, AUTH_TOKEN)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestDto)))
+                .content(jsonMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isForbidden());
     }
 
@@ -165,7 +165,7 @@ public class RoleControllerMVCTest {
         mockMvc.perform(post("/roles/update/{roleId}", ROLE_ID)
                 .header(AUTH_HEADER, AUTH_TOKEN)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestDto)))
+                .content(jsonMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -179,7 +179,7 @@ public class RoleControllerMVCTest {
         mockMvc.perform(post("/roles/update/{roleId}", ROLE_ID)
                 .header(AUTH_HEADER, AUTH_TOKEN)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestDto)))
+                .content(jsonMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isNotFound());
     }
 
