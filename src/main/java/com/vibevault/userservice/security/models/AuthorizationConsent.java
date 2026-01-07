@@ -28,6 +28,15 @@ public class AuthorizationConsent {
         private String registeredClientId;
         private String principalName;
 
+        /**
+         * Compares this AuthorizationConsentId to another object for equality.
+         *
+         * Two AuthorizationConsentId instances are equal when they are the same instance or when the other
+         * object is also an AuthorizationConsentId with equal registeredClientId and principalName.
+         *
+         * @param o the object to compare with
+         * @return `true` if equal, `false` otherwise
+         */
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
@@ -36,6 +45,11 @@ public class AuthorizationConsent {
             return registeredClientId.equals(that.registeredClientId) && principalName.equals(that.principalName);
         }
 
+        /**
+         * Computes a hash code for this composite key using the `registeredClientId` and `principalName`.
+         *
+         * @return an int hash code derived from `registeredClientId` and `principalName`
+         */
         @Override
         public int hashCode() {
             return Objects.hash(registeredClientId, principalName);

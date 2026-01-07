@@ -28,6 +28,12 @@ public class JpaRegisteredClientRepository implements RegisteredClientRepository
     private final ClientRepository clientRepository;
     private final JsonMapper jsonMapper;
 
+    /**
+     * Create a JpaRegisteredClientRepository backed by the given ClientRepository and initialize
+     * a JsonMapper configured for secure polymorphic (de)serialization with security and OAuth2 modules.
+     *
+     * @param clientRepository repository used to persist and retrieve client entities
+     */
     public JpaRegisteredClientRepository(ClientRepository clientRepository) {
         Assert.notNull(clientRepository, "clientRepository cannot be null");
         this.clientRepository = clientRepository;
@@ -48,24 +54,54 @@ public class JpaRegisteredClientRepository implements RegisteredClientRepository
                 .build();
     }
 
+    /**
+     * Persists the given RegisteredClient to the backing ClientRepository.
+     *
+     * @param registeredClient the client to persist; must not be null
+     * @throws IllegalArgumentException if {@code registeredClient} is null
+     */
     @Override
     public void save(RegisteredClient registeredClient) {
         Assert.notNull(registeredClient, "registeredClient cannot be null");
         this.clientRepository.save(toEntity(registeredClient));
     }
 
+    /**
+     * Retrieve the RegisteredClient with the specified id.
+     *
+     * @param id the repository identifier of the client
+     * @return the RegisteredClient with the given id, or {@code null} if none is found
+     */
     @Override
     public RegisteredClient findById(String id) {
         Assert.hasText(id, "id cannot be empty");
         return this.clientRepository.findById(id).map(this::toObject).orElse(null);
     }
 
+    /**
+     * Locate a RegisteredClient by its client identifier.
+     *
+     * @param clientId the client identifier to look up; must not be null or empty
+     * @return the RegisteredClient with the given clientId, or `null` if none is found
+     * @throws IllegalArgumentException if {@code clientId} is null or empty
+     */
     @Override
     public RegisteredClient findByClientId(String clientId) {
         Assert.hasText(clientId, "clientId cannot be empty");
         return this.clientRepository.findByClientId(clientId).map(this::toObject).orElse(null);
     }
 
+    /**
+     * Builds a RegisteredClient from a persistent Client entity.
+     *
+     * Converts the entity's comma-delimited fields into the corresponding sets (authentication methods,
+     * authorization grant types, redirect URIs, post-logout redirect URIs, and scopes), resolves known
+     * authentication methods and grant types, and applies client and token settings parsed from the
+     * entity's JSON representations.
+     *
+     * @param client the persistence Client entity to convert
+     * @return the RegisteredClient populated from the entity's fields and settings
+     */
     private RegisteredClient toObject(Client client) {
         Set<String> clientAuthenticationMethods = StringUtils.commaDelimitedListToSet(
                 client.getClientAuthenticationMethods());
@@ -103,6 +139,15 @@ public class JpaRegisteredClientRepository implements RegisteredClientRepository
         return builder.build();
     }
 
+    /**
+     * Converts a RegisteredClient into a Client persistence entity.
+     *
+     * The resulting Client contains scalar fields copied from the RegisteredClient, collection
+     * fields serialized as comma-delimited strings, and client/token settings serialized as JSON.
+     *
+     * @param registeredClient the RegisteredClient to convert
+     * @return a Client entity populated with the registered client's data
+     */
     private Client toEntity(RegisteredClient registeredClient) {
         List<String> clientAuthenticationMethods = new ArrayList<>(registeredClient.getClientAuthenticationMethods().size());
         registeredClient.getClientAuthenticationMethods().forEach(clientAuthenticationMethod ->
@@ -130,6 +175,13 @@ public class JpaRegisteredClientRepository implements RegisteredClientRepository
         return entity;
     }
 
+    /**
+     * Parse a JSON object string into a map.
+     *
+     * @param data the JSON string representing an object
+     * @return a Map<String, Object> containing the parsed JSON object
+     * @throws IllegalArgumentException if the input cannot be parsed as JSON
+     */
     private Map<String, Object> parseMap(String data) {
         try {
             return this.jsonMapper.readValue(data, new TypeReference<Map<String, Object>>() {
@@ -139,6 +191,13 @@ public class JpaRegisteredClientRepository implements RegisteredClientRepository
         }
     }
 
+    /**
+     * Serialize the provided map to a JSON string.
+     *
+     * @param data the map to serialize; keys are strings and values are arbitrary JSON-compatible objects
+     * @return the JSON string representation of the map
+     * @throws IllegalArgumentException if serialization fails
+     */
     private String writeMap(Map<String, Object> data) {
         try {
             return this.jsonMapper.writeValueAsString(data);
@@ -147,6 +206,12 @@ public class JpaRegisteredClientRepository implements RegisteredClientRepository
         }
     }
 
+    /**
+     * Resolve an AuthorizationGrantType from its string representation.
+     *
+     * @param authorizationGrantType the grant type value to resolve (e.g. "authorization_code")
+     * @return the matching standard AuthorizationGrantType constant, or a new AuthorizationGrantType constructed with the provided value for custom grant types
+     */
     private static AuthorizationGrantType resolveAuthorizationGrantType(String authorizationGrantType) {
         if (AuthorizationGrantType.AUTHORIZATION_CODE.getValue().equals(authorizationGrantType)) {
             return AuthorizationGrantType.AUTHORIZATION_CODE;
@@ -158,6 +223,12 @@ public class JpaRegisteredClientRepository implements RegisteredClientRepository
         return new AuthorizationGrantType(authorizationGrantType);              // Custom authorization grant type
     }
 
+    /**
+     * Resolve a string representation to a standard ClientAuthenticationMethod constant or create a custom one.
+     *
+     * @param clientAuthenticationMethod the string value of the client authentication method (e.g. "client_secret_basic", "client_secret_post", "none")
+     * @return the corresponding standard `ClientAuthenticationMethod` for known values, or a new `ClientAuthenticationMethod` constructed from the provided value for custom methods
+     */
     private static ClientAuthenticationMethod resolveClientAuthenticationMethod(String clientAuthenticationMethod) {
         if (ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue().equals(clientAuthenticationMethod)) {
             return ClientAuthenticationMethod.CLIENT_SECRET_BASIC;

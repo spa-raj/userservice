@@ -54,10 +54,22 @@ public class ExceptionAdvices {
     public ResponseEntity<String> handleEmptyRoleException(EmptyRoleException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
     }
+    /**
+     * Produces an HTTP 409 Conflict response whose body contains the role-already-exists error message.
+     *
+     * @param ex the RoleAlreadyExistsException to convert into an HTTP response
+     * @return a ResponseEntity whose body is the exception message and whose status is 409 Conflict
+     */
     @ExceptionHandler(RoleAlreadyExistsException.class)
     public ResponseEntity<String> handleRoleAlreadyExistsException(RoleAlreadyExistsException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
     }
+    /**
+     * Handles situations where a requested username does not exist and maps the error to an HTTP 404 response.
+     *
+     * @param ex the UsernameNotFoundException carrying the error message
+     * @return a ResponseEntity containing the exception message as the response body and HTTP 404 Not Found status
+     */
     @ExceptionHandler(UsernameNotFoundException.class)
     public ResponseEntity<String> handleUsernameNotFoundException(UsernameNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());

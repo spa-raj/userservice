@@ -22,6 +22,12 @@ public class JpaOAuth2AuthorizationConsentService implements OAuth2Authorization
     private final AuthorizationConsentRepository authorizationConsentRepository;
     private final RegisteredClientRepository registeredClientRepository;
 
+    /**
+     * Create a JpaOAuth2AuthorizationConsentService wired with the required repositories.
+     *
+     * @param authorizationConsentRepository repository used to persist and query AuthorizationConsent entities
+     * @param registeredClientRepository repository used to load RegisteredClient instances by id
+     */
     public JpaOAuth2AuthorizationConsentService(AuthorizationConsentRepository authorizationConsentRepository, RegisteredClientRepository registeredClientRepository) {
         Assert.notNull(authorizationConsentRepository, "authorizationConsentRepository cannot be null");
         Assert.notNull(registeredClientRepository, "registeredClientRepository cannot be null");
@@ -29,12 +35,22 @@ public class JpaOAuth2AuthorizationConsentService implements OAuth2Authorization
         this.registeredClientRepository = registeredClientRepository;
     }
 
+    /**
+     * Persists the provided OAuth2AuthorizationConsent.
+     *
+     * @param authorizationConsent the authorization consent to persist; must not be null
+     */
     @Override
     public void save(OAuth2AuthorizationConsent authorizationConsent) {
         Assert.notNull(authorizationConsent, "authorizationConsent cannot be null");
         this.authorizationConsentRepository.save(toEntity(authorizationConsent));
     }
 
+    /**
+     * Delete the stored authorization consent matching the given consent's registered client ID and principal name.
+     *
+     * @param authorizationConsent the consent whose stored record (matched by registeredClientId and principalName) will be removed; must not be null
+     */
     @Override
     public void remove(OAuth2AuthorizationConsent authorizationConsent) {
         Assert.notNull(authorizationConsent, "authorizationConsent cannot be null");
@@ -42,6 +58,13 @@ public class JpaOAuth2AuthorizationConsentService implements OAuth2Authorization
                 authorizationConsent.getRegisteredClientId(), authorizationConsent.getPrincipalName());
     }
 
+    /**
+     * Load the OAuth2AuthorizationConsent for the given registered client and principal.
+     *
+     * @param registeredClientId the identifier of the registered client
+     * @param principalName      the name of the principal (user)
+     * @return                   the matching {@code OAuth2AuthorizationConsent}, or {@code null} if none is found
+     */
     @Override
     public OAuth2AuthorizationConsent findById(String registeredClientId, String principalName) {
         Assert.hasText(registeredClientId, "registeredClientId cannot be empty");
@@ -50,6 +73,13 @@ public class JpaOAuth2AuthorizationConsentService implements OAuth2Authorization
                 registeredClientId, principalName).map(this::toObject).orElse(null);
     }
 
+    /**
+     * Convert an AuthorizationConsent entity into an OAuth2AuthorizationConsent.
+     *
+     * @param authorizationConsent the entity containing stored consent data
+     * @return an OAuth2AuthorizationConsent populated with the registered client id, principal name, and any authorities
+     * @throws org.springframework.dao.DataRetrievalFailureException if the RegisteredClient for the entity's registeredClientId cannot be found
+     */
     private OAuth2AuthorizationConsent toObject(AuthorizationConsent authorizationConsent) {
         String registeredClientId = authorizationConsent.getRegisteredClientId();
         RegisteredClient registeredClient = this.registeredClientRepository.findById(registeredClientId);
@@ -69,6 +99,14 @@ public class JpaOAuth2AuthorizationConsentService implements OAuth2Authorization
         return builder.build();
     }
 
+    /**
+     * Convert an OAuth2AuthorizationConsent into a persistent AuthorizationConsent entity.
+     *
+     * @param authorizationConsent the source consent whose registeredClientId, principalName,
+     *                             and authorities will be copied; authorities are stored as a
+     *                             comma-delimited string
+     * @return an AuthorizationConsent populated from the provided OAuth2AuthorizationConsent
+     */
     private AuthorizationConsent toEntity(OAuth2AuthorizationConsent authorizationConsent) {
         AuthorizationConsent entity = new AuthorizationConsent();
         entity.setRegisteredClientId(authorizationConsent.getRegisteredClientId());

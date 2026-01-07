@@ -39,6 +39,14 @@ public class JpaOAuth2AuthorizationService implements OAuth2AuthorizationService
     private final RegisteredClientRepository registeredClientRepository;
     private final JsonMapper jsonMapper;
 
+    /**
+     * Create a JpaOAuth2AuthorizationService that persists OAuth2Authorizations using the given repositories
+     * and configures a JsonMapper with security and custom modules for safe polymorphic JSON (de)serialization.
+     *
+     * @param authorizationRepository repository used to persist and load Authorization entities
+     * @param registeredClientRepository repository used to load RegisteredClient instances by id
+     * @throws IllegalArgumentException if {@code authorizationRepository} or {@code registeredClientRepository} is null
+     */
     public JpaOAuth2AuthorizationService(AuthorizationRepository authorizationRepository, RegisteredClientRepository registeredClientRepository) {
         Assert.notNull(authorizationRepository, "authorizationRepository cannot be null");
         Assert.notNull(registeredClientRepository, "registeredClientRepository cannot be null");
@@ -61,24 +69,48 @@ public class JpaOAuth2AuthorizationService implements OAuth2AuthorizationService
                 .build();
     }
 
+    /**
+     * Persist the given OAuth2Authorization in the backing repository.
+     *
+     * @param authorization the authorization to persist; must not be null
+     */
     @Override
     public void save(OAuth2Authorization authorization) {
         Assert.notNull(authorization, "authorization cannot be null");
         this.authorizationRepository.save(toEntity(authorization));
     }
 
+    /**
+     * Remove the persisted authorization that corresponds to the given OAuth2Authorization.
+     *
+     * @param authorization the authorization whose stored record will be deleted (identified by its id)
+     * @throws IllegalArgumentException if {@code authorization} is {@code null}
+     */
     @Override
     public void remove(OAuth2Authorization authorization) {
         Assert.notNull(authorization, "authorization cannot be null");
         this.authorizationRepository.deleteById(authorization.getId());
     }
 
+    /**
+     * Locate an OAuth2 authorization by its identifier.
+     *
+     * @param id the authorization identifier; must not be empty
+     * @return the matching {@link OAuth2Authorization}, or `null` if none exists
+     */
     @Override
     public OAuth2Authorization findById(String id) {
         Assert.hasText(id, "id cannot be empty");
         return this.authorizationRepository.findById(id).map(this::toObject).orElse(null);
     }
 
+    /**
+     * Locate an OAuth2Authorization by a token string, optionally constrained to a specific token type.
+     *
+     * @param token the token value to search for (must not be empty)
+     * @param tokenType the token type to restrict the lookup (e.g., state, code, access_token, refresh_token, id_token, user_code, device_code); if `null`, search across all supported token fields
+     * @return the matching OAuth2Authorization, or `null` if none is found
+     */
     @Override
     public OAuth2Authorization findByToken(String token, OAuth2TokenType tokenType) {
         Assert.hasText(token, "token cannot be empty");
@@ -107,6 +139,18 @@ public class JpaOAuth2AuthorizationService implements OAuth2AuthorizationService
         return result.map(this::toObject).orElse(null);
     }
 
+    /**
+     * Converts a persisted Authorization entity into an OAuth2Authorization instance.
+     *
+     * <p>Reconstructs the registered client reference, principal name, grant type, authorized scopes,
+     * attributes, and all supported tokens (authorization code, access token, refresh token, OIDC ID
+     * token, user code, device code) including their issued/expiry instants and per-token metadata
+     * and claims.</p>
+     *
+     * @param entity the persisted Authorization entity to convert
+     * @return an OAuth2Authorization populated from the entity
+     * @throws DataRetrievalFailureException if the RegisteredClient referenced by the entity cannot be found
+     */
     private OAuth2Authorization toObject(Authorization entity) {
         RegisteredClient registeredClient = this.registeredClientRepository.findById(entity.getRegisteredClientId());
         if (registeredClient == null) {
@@ -178,6 +222,17 @@ public class JpaOAuth2AuthorizationService implements OAuth2AuthorizationService
         return builder.build();
     }
 
+    /**
+     * Convert an OAuth2Authorization into a populated Authorization entity suitable for persistence.
+     *
+     * Copies the authorization's id, registered client id, principal name, grant type, authorized scopes,
+     * attributes, and state, and extracts all token payloads (authorization code, access token, refresh token,
+     * OIDC ID token, user code, device code) including token values, issuedAt/expiresAt timestamps, token metadata,
+     * access token scopes, and OIDC ID token claims.
+     *
+     * @param authorization the OAuth2Authorization to convert
+     * @return an Authorization entity containing the data from the provided OAuth2Authorization
+     */
     private Authorization toEntity(OAuth2Authorization authorization) {
         Authorization entity = new Authorization();
         entity.setId(authorization.getId());
@@ -257,6 +312,16 @@ public class JpaOAuth2AuthorizationService implements OAuth2AuthorizationService
         return entity;
     }
 
+    /**
+     * If the given token is present, supplies its value, issued-at time, expiry time,
+     * and serialized metadata to the provided consumers.
+     *
+     * @param token the OAuth2 authorization token to read values from; if {@code null}, no consumers are invoked
+     * @param tokenValueConsumer receives the token's raw string value
+     * @param issuedAtConsumer receives the token's issued-at instant (may be {@code null})
+     * @param expiresAtConsumer receives the token's expiry instant (may be {@code null})
+     * @param metadataConsumer receives the token metadata serialized as a JSON string
+     */
     private void setTokenValues(
             OAuth2Authorization.Token<?> token,
             Consumer<String> tokenValueConsumer,
@@ -272,6 +337,13 @@ public class JpaOAuth2AuthorizationService implements OAuth2AuthorizationService
         }
     }
 
+    /**
+     * Parse a JSON-formatted string into a Map of keys to deserialized values.
+     *
+     * @param data the JSON string to parse (may be null or empty resulting in appropriate mapping)
+     * @return a Map<String, Object> representing the deserialized JSON structure
+     * @throws IllegalArgumentException if the input cannot be parsed as JSON
+     */
     private Map<String, Object> parseMap(String data) {
         try {
             return this.jsonMapper.readValue(data, new TypeReference<Map<String, Object>>() {
@@ -281,6 +353,13 @@ public class JpaOAuth2AuthorizationService implements OAuth2AuthorizationService
         }
     }
 
+    /**
+     * Serialize a metadata map to its JSON string representation.
+     *
+     * @param metadata the map of metadata values to serialize; may be empty but not necessarily non-null
+     * @return the JSON string representation of the provided metadata map
+     * @throws IllegalArgumentException if the metadata cannot be serialized to JSON
+     */
     private String writeMap(Map<String, Object> metadata) {
         try {
             return this.jsonMapper.writeValueAsString(metadata);
@@ -289,6 +368,17 @@ public class JpaOAuth2AuthorizationService implements OAuth2AuthorizationService
         }
     }
 
+    /**
+     * Resolve a grant type identifier to the corresponding AuthorizationGrantType.
+     *
+     * <p>Maps standard grant type values ("authorization_code", "client_credentials",
+     * "refresh_token", "urn:ietf:params:oauth:grant-type:device_code") to their
+     * predefined AuthorizationGrantType constants; for any other identifier returns
+     * a new AuthorizationGrantType constructed from the provided string.</p>
+     *
+     * @param authorizationGrantType the grant type identifier string (standard or custom)
+     * @return the matching AuthorizationGrantType constant for known types, or a new AuthorizationGrantType for a custom identifier
+     */
     private static AuthorizationGrantType resolveAuthorizationGrantType(String authorizationGrantType) {
         if (AuthorizationGrantType.AUTHORIZATION_CODE.getValue().equals(authorizationGrantType)) {
             return AuthorizationGrantType.AUTHORIZATION_CODE;

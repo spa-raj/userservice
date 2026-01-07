@@ -17,10 +17,22 @@ import java.util.UUID;
 
 public class CustomUserDetailsDeserializer extends StdDeserializer<CustomUserDetails> {
 
+    /**
+     * Constructs a deserializer registered for CustomUserDetails.
+     */
     public CustomUserDetailsDeserializer() {
         super(CustomUserDetails.class);
     }
 
+    /**
+     * Constructs a CustomUserDetails from JSON by reading the "user" object and the "cachedAuthorities" array.
+     *
+     * The returned CustomUserDetails contains a User populated from fields found in the "user" node (id, email, firstName, lastName, phoneNumber, password) and cached granted authorities built from roles found in the "cachedAuthorities" array. The UserRoleRepository on the created CustomUserDetails is left unset (null).
+     *
+     * @param p the JsonParser positioned at the JSON to deserialize
+     * @param ctxt the DeserializationContext for this operation
+     * @return a CustomUserDetails populated from the parsed JSON
+     */
     @Override
     public CustomUserDetails deserialize(JsonParser p, DeserializationContext ctxt) throws JacksonException {
         JsonNode node = p.readValueAsTree();

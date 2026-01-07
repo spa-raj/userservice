@@ -7,5 +7,11 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ClientRepository extends JpaRepository<Client, String> {
-    Optional<Client> findByClientId(String clientId);
+    /**
+ * Finds a Client by its clientId.
+ *
+ * @param clientId the client identifier to look up
+ * @return an {@link Optional} containing the matching {@link Client} if found, otherwise an empty {@link Optional}
+ */
+Optional<Client> findByClientId(String clientId);
 }
