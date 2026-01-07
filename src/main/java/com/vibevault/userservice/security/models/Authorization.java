@@ -31,6 +31,7 @@ public class Authorization {
     private String authorizationCodeValue;
     private Instant authorizationCodeIssuedAt;
     private Instant authorizationCodeExpiresAt;
+    @Column(length = 2000)
     private String authorizationCodeMetadata;
 
     @Column(length = 4000)
