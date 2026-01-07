@@ -100,6 +100,7 @@ public class SecurityConfig {
                 .securityMatcher("/auth/**", "/api/**")
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
                 .authorizeHttpRequests((authorize) -> authorize
                         .requestMatchers("/auth/login", "/auth/signup", "/auth/validate").permitAll()
                         .anyRequest().authenticated()
@@ -153,6 +154,7 @@ public class SecurityConfig {
 //        return new InMemoryRegisteredClientRepository(oidcClient);
 //    }
 
+    // TODO: Persist RSA keys to survive restarts - see https://github.com/spa-raj/userservice/issues/25
     @Bean
     public JWKSource<SecurityContext> jwkSource() {
         KeyPair keyPair = generateRsaKey();
@@ -196,7 +198,8 @@ public class SecurityConfig {
                 context.getClaims().claims((claims) -> {
                     Set<String> roles = AuthorityUtils.authorityListToSet(context.getPrincipal().getAuthorities())
                             .stream()
-                            .map(c -> c.replaceFirst("^ROLE_", ""))
+                            .filter(c -> c.startsWith("ROLE_"))
+                            .map(c -> c.substring(5)) // Remove "ROLE_" prefix
                             .collect(Collectors.collectingAndThen(Collectors.toSet(), Collections::unmodifiableSet));
                     claims.put("roles", roles);
                 });
