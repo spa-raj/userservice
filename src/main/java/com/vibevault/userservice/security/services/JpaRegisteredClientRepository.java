@@ -33,16 +33,16 @@ public class JpaRegisteredClientRepository implements RegisteredClientRepository
         this.clientRepository = clientRepository;
 
         ClassLoader classLoader = JpaRegisteredClientRepository.class.getClassLoader();
-        BasicPolymorphicTypeValidator typeValidator = BasicPolymorphicTypeValidator.builder()
+        // Configure validator to allow all application and Spring Security types
+        BasicPolymorphicTypeValidator.Builder validatorBuilder = BasicPolymorphicTypeValidator.builder()
                 .allowIfBaseType(Object.class)
                 .allowIfSubTypeIsArray()
                 .allowIfSubType("com.vibevault.userservice.")
                 .allowIfSubType("org.springframework.security.")
-                .allowIfSubType("java.")
-                .build();
+                .allowIfSubType("java.");
+
         this.jsonMapper = JsonMapper.builder()
-                .polymorphicTypeValidator(typeValidator)
-                .addModules(SecurityJacksonModules.getModules(classLoader))
+                .addModules(SecurityJacksonModules.getModules(classLoader, validatorBuilder))
                 .addModule(new OAuth2AuthorizationServerJacksonModule())
                 .addModule(new CustomSecurityJacksonModule())
                 .build();
@@ -115,7 +115,9 @@ public class JpaRegisteredClientRepository implements RegisteredClientRepository
         Client entity = new Client();
         entity.setId(registeredClient.getId());
         entity.setClientId(registeredClient.getClientId());
-        entity.setClientIdIssuedAt(registeredClient.getClientIdIssuedAt());
+        entity.setClientIdIssuedAt(registeredClient.getClientIdIssuedAt() != null
+                ? registeredClient.getClientIdIssuedAt()
+                : java.time.Instant.now());
         entity.setClientSecret(registeredClient.getClientSecret());
         entity.setClientSecretExpiresAt(registeredClient.getClientSecretExpiresAt());
         entity.setClientName(registeredClient.getClientName());
@@ -154,6 +156,8 @@ public class JpaRegisteredClientRepository implements RegisteredClientRepository
             return AuthorizationGrantType.CLIENT_CREDENTIALS;
         } else if (AuthorizationGrantType.REFRESH_TOKEN.getValue().equals(authorizationGrantType)) {
             return AuthorizationGrantType.REFRESH_TOKEN;
+        } else if (AuthorizationGrantType.DEVICE_CODE.getValue().equals(authorizationGrantType)) {
+            return AuthorizationGrantType.DEVICE_CODE;
         }
         return new AuthorizationGrantType(authorizationGrantType);              // Custom authorization grant type
     }
