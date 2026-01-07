@@ -18,11 +18,11 @@ import java.util.List;
 import java.util.Optional;
 
 @Getter
-@Setter
 @JsonDeserialize(as = CustomUserDetails.class)
 public class CustomUserDetails implements UserDetails {
     private final User user;
     @JsonIgnore
+    @Setter
     private UserRoleRepository userRoleRepository;
     // Cached authorities for serialization - loaded once and stored
     private List<GrantedAuthority> cachedAuthorities;
