@@ -118,6 +118,7 @@ public class SecurityConfig {
                 .securityMatcher("/auth/**", "/api/**")
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
                 .authorizeHttpRequests((authorize) -> authorize
                         .requestMatchers("/auth/login", "/auth/signup", "/auth/validate").permitAll()
                         .anyRequest().authenticated()
@@ -152,39 +153,12 @@ public class SecurityConfig {
         return http.build();
     }
 
-//    @Bean
-//    public UserDetailsService userDetailsService() {
-//        UserDetails userDetails = User.withDefaultPasswordEncoder()
-//                .username("user")
-//                .password("password")
-//                .roles("USER")
-//                .build();
-//
-//        return new InMemoryUserDetailsManager(userDetails);
-//    }
-
-//    @Bean
-//    public RegisteredClientRepository registeredClientRepository() {
-//        RegisteredClient oidcClient = RegisteredClient.withId(UUID.randomUUID().toString())
-//                .clientId("oidc-client")
-//                .clientSecret("{noop}secret")
-//                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-//                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-//                .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-//                .redirectUri("http://127.0.0.1:8080/login/oauth2/code/oidc-client")
-//                .postLogoutRedirectUri("http://127.0.0.1:8080/")
-//                .scope(OidcScopes.OPENID)
-//                .scope(OidcScopes.PROFILE)
-//                .clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
-//                .build();
-//
-//        return new InMemoryRegisteredClientRepository(oidcClient);
-/**
      * Provides a JWK source containing an RSA key used for signing and verifying JWTs.
      *
      * @return a JWKSource backed by an immutable JWKSet that exposes an RSA JSON Web Key
      */
 
+    // TODO: Persist RSA keys to survive restarts - see https://github.com/spa-raj/userservice/issues/25
     @Bean
     public JWKSource<SecurityContext> jwkSource() {
         KeyPair keyPair = generateRsaKey();
@@ -255,7 +229,8 @@ public class SecurityConfig {
                 context.getClaims().claims((claims) -> {
                     Set<String> roles = AuthorityUtils.authorityListToSet(context.getPrincipal().getAuthorities())
                             .stream()
-                            .map(c -> c.replaceFirst("^ROLE_", ""))
+                            .filter(c -> c.startsWith("ROLE_"))
+                            .map(c -> c.substring(5)) // Remove "ROLE_" prefix
                             .collect(Collectors.collectingAndThen(Collectors.toSet(), Collections::unmodifiableSet));
                     claims.put("roles", roles);
                 });

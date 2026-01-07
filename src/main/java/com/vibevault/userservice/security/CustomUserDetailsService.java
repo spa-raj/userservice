@@ -3,20 +3,14 @@ package com.vibevault.userservice.security;
 import com.vibevault.userservice.models.User;
 import com.vibevault.userservice.repositories.UserRepository;
 import com.vibevault.userservice.repositories.UserRoleRepository;
-import lombok.Getter;
-import lombok.Setter;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-import tools.jackson.databind.annotation.JsonDeserialize;
 
 import java.util.Optional;
 
-@Getter
-@Setter
 @Service
-@JsonDeserialize(as = CustomUserDetailsService.class)
 public class CustomUserDetailsService implements UserDetailsService {
     private final UserRepository userRepository;
     private final UserRoleRepository userRoleRepository;

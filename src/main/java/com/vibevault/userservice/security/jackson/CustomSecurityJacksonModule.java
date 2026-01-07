@@ -23,6 +23,7 @@ public class CustomSecurityJacksonModule extends SimpleModule {
      */
     @Override
     public void setupModule(SetupContext context) {
+        super.setupModule(context);
         context.setMixIn(CustomUserDetails.class, CustomUserDetailsMixin.class);
         context.setMixIn(CustomGrantedAuthority.class, CustomGrantedAuthorityMixin.class);
     }

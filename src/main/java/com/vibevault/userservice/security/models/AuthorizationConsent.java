@@ -14,7 +14,7 @@ import lombok.Setter;
 @Setter
 @Getter
 @Entity
-@Table(name = "authorizationConsent")
+@Table(name = "authorization_consent")
 @IdClass(AuthorizationConsent.AuthorizationConsentId.class)
 public class AuthorizationConsent {
     @Id
@@ -42,7 +42,8 @@ public class AuthorizationConsent {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             AuthorizationConsentId that = (AuthorizationConsentId) o;
-            return registeredClientId.equals(that.registeredClientId) && principalName.equals(that.principalName);
+            return Objects.equals(registeredClientId, that.registeredClientId)
+                    && Objects.equals(principalName, that.principalName);
         }
 
         /**
