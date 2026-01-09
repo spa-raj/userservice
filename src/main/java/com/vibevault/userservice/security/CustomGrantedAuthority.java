@@ -28,6 +28,6 @@ public class CustomGrantedAuthority implements GrantedAuthority {
     @Override
     @JsonIgnore
     public @Nullable String getAuthority() {
-        return this.role.getName();
+        return "ROLE_" + this.role.getName();
     }
 }
