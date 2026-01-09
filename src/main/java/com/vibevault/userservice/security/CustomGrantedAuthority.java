@@ -28,6 +28,9 @@ public class CustomGrantedAuthority implements GrantedAuthority {
     @Override
     @JsonIgnore
     public @Nullable String getAuthority() {
+        if (this.role == null || this.role.getName() == null) {
+            return null;
+        }
         return "ROLE_" + this.role.getName();
     }
 }
