@@ -1,0 +1,97 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > AuthorizationRepository</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.vibevault.userservice.security.repositories</a>
+</div>
+
+<h1>Coverage Summary for Class: AuthorizationRepository (com.vibevault.userservice.security.repositories)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+</tr>
+<tr>
+  <td class="name">AuthorizationRepository</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.vibevault.userservice.security.repositories;
+&nbsp;
+&nbsp;import java.util.Optional;
+&nbsp;
+&nbsp;import com.vibevault.userservice.security.models.Authorization;
+&nbsp;import org.springframework.data.jpa.repository.JpaRepository;
+&nbsp;import org.springframework.data.jpa.repository.Query;
+&nbsp;import org.springframework.data.repository.query.Param;
+&nbsp;import org.springframework.stereotype.Repository;
+&nbsp;
+&nbsp;@Repository
+&nbsp;public interface AuthorizationRepository extends JpaRepository&lt;Authorization, String&gt; {
+&nbsp;    Optional&lt;Authorization&gt; findByState(String state);
+&nbsp;    Optional&lt;Authorization&gt; findByAuthorizationCodeValue(String authorizationCode);
+&nbsp;    Optional&lt;Authorization&gt; findByAccessTokenValue(String accessToken);
+&nbsp;    Optional&lt;Authorization&gt; findByRefreshTokenValue(String refreshToken);
+&nbsp;    Optional&lt;Authorization&gt; findByOidcIdTokenValue(String idToken);
+&nbsp;    Optional&lt;Authorization&gt; findByUserCodeValue(String userCode);
+&nbsp;    Optional&lt;Authorization&gt; findByDeviceCodeValue(String deviceCode);
+&nbsp;    @Query(&quot;select a from Authorization a where a.state = :token&quot; +
+&nbsp;            &quot; or a.authorizationCodeValue = :token&quot; +
+&nbsp;            &quot; or a.accessTokenValue = :token&quot; +
+&nbsp;            &quot; or a.refreshTokenValue = :token&quot; +
+&nbsp;            &quot; or a.oidcIdTokenValue = :token&quot; +
+&nbsp;            &quot; or a.userCodeValue = :token&quot; +
+&nbsp;            &quot; or a.deviceCodeValue = :token&quot;
+&nbsp;    )
+&nbsp;    Optional&lt;Authorization&gt; findByStateOrAuthorizationCodeValueOrAccessTokenValueOrRefreshTokenValueOrOidcIdTokenValueOrUserCodeValueOrDeviceCodeValue(@Param(&quot;token&quot;) String token);
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-01-10 15:25</div>
+</div>
+</body>
+</html>

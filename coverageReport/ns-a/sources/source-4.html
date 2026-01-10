@@ -1,0 +1,194 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > CustomUserDetailsDeserializer</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.vibevault.userservice.security.jackson</a>
+</div>
+
+<h1>Coverage Summary for Class: CustomUserDetailsDeserializer (com.vibevault.userservice.security.jackson)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">CustomUserDetailsDeserializer</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/32)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/34)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.vibevault.userservice.security.jackson;
+&nbsp;
+&nbsp;import com.vibevault.userservice.models.Role;
+&nbsp;import com.vibevault.userservice.models.User;
+&nbsp;import com.vibevault.userservice.security.CustomGrantedAuthority;
+&nbsp;import com.vibevault.userservice.security.CustomUserDetails;
+&nbsp;import org.springframework.security.core.GrantedAuthority;
+&nbsp;import tools.jackson.core.JacksonException;
+&nbsp;import tools.jackson.core.JsonParser;
+&nbsp;import tools.jackson.databind.DeserializationContext;
+&nbsp;import tools.jackson.databind.JsonNode;
+&nbsp;import tools.jackson.databind.deser.std.StdDeserializer;
+&nbsp;
+&nbsp;import java.util.ArrayList;
+&nbsp;import java.util.List;
+&nbsp;import java.util.UUID;
+&nbsp;
+&nbsp;public class CustomUserDetailsDeserializer extends StdDeserializer&lt;CustomUserDetails&gt; {
+&nbsp;
+&nbsp;    public CustomUserDetailsDeserializer() {
+<b class="nc">&nbsp;        super(CustomUserDetails.class);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public CustomUserDetails deserialize(JsonParser p, DeserializationContext ctxt) throws JacksonException {
+<b class="nc">&nbsp;        JsonNode node = p.readValueAsTree();</b>
+<b class="nc">&nbsp;        JsonNode userNode = node.get(&quot;user&quot;);</b>
+&nbsp;
+<b class="nc">&nbsp;        User user = new User();</b>
+<b class="nc">&nbsp;        if (userNode != null) {</b>
+<b class="nc">&nbsp;            if (userNode.has(&quot;id&quot;) &amp;&amp; !userNode.get(&quot;id&quot;).isNull()) {</b>
+<b class="nc">&nbsp;                user.setId(UUID.fromString(userNode.get(&quot;id&quot;).stringValue()));</b>
+&nbsp;            }
+<b class="nc">&nbsp;            if (userNode.has(&quot;email&quot;)) {</b>
+<b class="nc">&nbsp;                user.setEmail(userNode.get(&quot;email&quot;).stringValue());</b>
+&nbsp;            }
+<b class="nc">&nbsp;            if (userNode.has(&quot;firstName&quot;)) {</b>
+<b class="nc">&nbsp;                user.setFirstName(userNode.get(&quot;firstName&quot;).stringValue());</b>
+&nbsp;            }
+<b class="nc">&nbsp;            if (userNode.has(&quot;lastName&quot;)) {</b>
+<b class="nc">&nbsp;                user.setLastName(userNode.get(&quot;lastName&quot;).stringValue());</b>
+&nbsp;            }
+<b class="nc">&nbsp;            if (userNode.has(&quot;phoneNumber&quot;)) {</b>
+<b class="nc">&nbsp;                user.setPhoneNumber(userNode.get(&quot;phoneNumber&quot;).stringValue());</b>
+&nbsp;            }
+<b class="nc">&nbsp;            if (userNode.has(&quot;password&quot;)) {</b>
+<b class="nc">&nbsp;                user.setPassword(userNode.get(&quot;password&quot;).stringValue());</b>
+&nbsp;            }
+&nbsp;        }
+&nbsp;
+&nbsp;        // Parse cached authorities
+<b class="nc">&nbsp;        List&lt;GrantedAuthority&gt; authorities = new ArrayList&lt;&gt;();</b>
+<b class="nc">&nbsp;        JsonNode authoritiesNode = node.get(&quot;cachedAuthorities&quot;);</b>
+<b class="nc">&nbsp;        if (authoritiesNode != null &amp;&amp; authoritiesNode.isArray()) {</b>
+<b class="nc">&nbsp;            for (JsonNode authNode : authoritiesNode) {</b>
+<b class="nc">&nbsp;                JsonNode roleNode = authNode.get(&quot;role&quot;);</b>
+<b class="nc">&nbsp;                if (roleNode != null) {</b>
+<b class="nc">&nbsp;                    Role role = new Role();</b>
+<b class="nc">&nbsp;                    if (roleNode.has(&quot;id&quot;) &amp;&amp; !roleNode.get(&quot;id&quot;).isNull()) {</b>
+<b class="nc">&nbsp;                        role.setId(UUID.fromString(roleNode.get(&quot;id&quot;).stringValue()));</b>
+&nbsp;                    }
+<b class="nc">&nbsp;                    if (roleNode.has(&quot;name&quot;)) {</b>
+<b class="nc">&nbsp;                        role.setName(roleNode.get(&quot;name&quot;).stringValue());</b>
+&nbsp;                    }
+<b class="nc">&nbsp;                    if (roleNode.has(&quot;description&quot;)) {</b>
+<b class="nc">&nbsp;                        role.setDescription(roleNode.get(&quot;description&quot;).stringValue());</b>
+&nbsp;                    }
+<b class="nc">&nbsp;                    authorities.add(new CustomGrantedAuthority(role));</b>
+&nbsp;                }
+&nbsp;            }
+&nbsp;        }
+&nbsp;
+&nbsp;        // UserRoleRepository will be null, but we have cached authorities
+<b class="nc">&nbsp;        CustomUserDetails customUserDetails = new CustomUserDetails(user, null);</b>
+<b class="nc">&nbsp;        customUserDetails.setCachedAuthorities(authorities);</b>
+<b class="nc">&nbsp;        return customUserDetails;</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-01-10 15:25</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,454 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > JpaOAuth2AuthorizationService</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.vibevault.userservice.security.services</a>
+</div>
+
+<h1>Coverage Summary for Class: JpaOAuth2AuthorizationService (com.vibevault.userservice.security.services)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">JpaOAuth2AuthorizationService</td>
+<td class="coverageStat">
+  <span class="percent">
+    9.1%
+  </span>
+  <span class="absValue">
+    (1/11)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/48)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    10.2%
+  </span>
+  <span class="absValue">
+    (17/167)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">JpaOAuth2AuthorizationService$1</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>Total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    8.3%
+  </span>
+  <span class="absValue">
+    (1/12)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/48)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    10.1%
+  </span>
+  <span class="absValue">
+    (17/168)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.vibevault.userservice.security.services;
+&nbsp;
+&nbsp;import java.time.Instant;
+&nbsp;import java.util.Map;
+&nbsp;import java.util.Optional;
+&nbsp;import java.util.function.Consumer;
+&nbsp;
+&nbsp;import com.vibevault.userservice.security.jackson.CustomSecurityJacksonModule;
+&nbsp;import com.vibevault.userservice.security.models.Authorization;
+&nbsp;import com.vibevault.userservice.security.repositories.AuthorizationRepository;
+&nbsp;import org.springframework.dao.DataRetrievalFailureException;
+&nbsp;import org.springframework.security.jackson.SecurityJacksonModules;
+&nbsp;import org.springframework.security.oauth2.core.AuthorizationGrantType;
+&nbsp;import org.springframework.security.oauth2.core.OAuth2AccessToken;
+&nbsp;import org.springframework.security.oauth2.core.OAuth2DeviceCode;
+&nbsp;import org.springframework.security.oauth2.core.OAuth2RefreshToken;
+&nbsp;import org.springframework.security.oauth2.core.OAuth2Token;
+&nbsp;import org.springframework.security.oauth2.core.OAuth2UserCode;
+&nbsp;import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
+&nbsp;import org.springframework.security.oauth2.core.oidc.OidcIdToken;
+&nbsp;import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames;
+&nbsp;import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
+&nbsp;import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationCode;
+&nbsp;import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
+&nbsp;import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
+&nbsp;import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
+&nbsp;import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
+&nbsp;import org.springframework.security.oauth2.server.authorization.jackson.OAuth2AuthorizationServerJacksonModule;
+&nbsp;import org.springframework.stereotype.Component;
+&nbsp;import org.springframework.util.Assert;
+&nbsp;import org.springframework.util.StringUtils;
+&nbsp;import tools.jackson.core.type.TypeReference;
+&nbsp;import tools.jackson.databind.json.JsonMapper;
+&nbsp;import tools.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
+&nbsp;
+&nbsp;@Component
+&nbsp;public class JpaOAuth2AuthorizationService implements OAuth2AuthorizationService {
+&nbsp;    private final AuthorizationRepository authorizationRepository;
+&nbsp;    private final RegisteredClientRepository registeredClientRepository;
+&nbsp;    private final JsonMapper jsonMapper;
+&nbsp;
+<b class="fc">&nbsp;    public JpaOAuth2AuthorizationService(AuthorizationRepository authorizationRepository, RegisteredClientRepository registeredClientRepository) {</b>
+<b class="fc">&nbsp;        Assert.notNull(authorizationRepository, &quot;authorizationRepository cannot be null&quot;);</b>
+<b class="fc">&nbsp;        Assert.notNull(registeredClientRepository, &quot;registeredClientRepository cannot be null&quot;);</b>
+<b class="fc">&nbsp;        this.authorizationRepository = authorizationRepository;</b>
+<b class="fc">&nbsp;        this.registeredClientRepository = registeredClientRepository;</b>
+&nbsp;
+<b class="fc">&nbsp;        ClassLoader classLoader = JpaOAuth2AuthorizationService.class.getClassLoader();</b>
+&nbsp;        // Configure validator to allow all application and Spring Security types
+<b class="fc">&nbsp;        BasicPolymorphicTypeValidator.Builder validatorBuilder = BasicPolymorphicTypeValidator.builder()</b>
+<b class="fc">&nbsp;                .allowIfBaseType(Object.class)</b>
+<b class="fc">&nbsp;                .allowIfSubTypeIsArray()</b>
+<b class="fc">&nbsp;                .allowIfSubType(&quot;com.vibevault.userservice.&quot;)</b>
+<b class="fc">&nbsp;                .allowIfSubType(&quot;org.springframework.security.&quot;)</b>
+<b class="fc">&nbsp;                .allowIfSubType(&quot;java.&quot;);</b>
+&nbsp;
+<b class="fc">&nbsp;        this.jsonMapper = JsonMapper.builder()</b>
+<b class="fc">&nbsp;                .addModules(SecurityJacksonModules.getModules(classLoader, validatorBuilder))</b>
+<b class="fc">&nbsp;                .addModule(new OAuth2AuthorizationServerJacksonModule())</b>
+<b class="fc">&nbsp;                .addModule(new CustomSecurityJacksonModule())</b>
+<b class="fc">&nbsp;                .build();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public void save(OAuth2Authorization authorization) {
+<b class="nc">&nbsp;        Assert.notNull(authorization, &quot;authorization cannot be null&quot;);</b>
+<b class="nc">&nbsp;        this.authorizationRepository.save(toEntity(authorization));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public void remove(OAuth2Authorization authorization) {
+<b class="nc">&nbsp;        Assert.notNull(authorization, &quot;authorization cannot be null&quot;);</b>
+<b class="nc">&nbsp;        this.authorizationRepository.deleteById(authorization.getId());</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public OAuth2Authorization findById(String id) {
+<b class="nc">&nbsp;        Assert.hasText(id, &quot;id cannot be empty&quot;);</b>
+<b class="nc">&nbsp;        return this.authorizationRepository.findById(id).map(this::toObject).orElse(null);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public OAuth2Authorization findByToken(String token, OAuth2TokenType tokenType) {
+<b class="nc">&nbsp;        Assert.hasText(token, &quot;token cannot be empty&quot;);</b>
+&nbsp;
+&nbsp;        Optional&lt;Authorization&gt; result;
+<b class="nc">&nbsp;        if (tokenType == null) {</b>
+<b class="nc">&nbsp;            result = this.authorizationRepository.findByStateOrAuthorizationCodeValueOrAccessTokenValueOrRefreshTokenValueOrOidcIdTokenValueOrUserCodeValueOrDeviceCodeValue(token);</b>
+<b class="nc">&nbsp;        } else if (OAuth2ParameterNames.STATE.equals(tokenType.getValue())) {</b>
+<b class="nc">&nbsp;            result = this.authorizationRepository.findByState(token);</b>
+<b class="nc">&nbsp;        } else if (OAuth2ParameterNames.CODE.equals(tokenType.getValue())) {</b>
+<b class="nc">&nbsp;            result = this.authorizationRepository.findByAuthorizationCodeValue(token);</b>
+<b class="nc">&nbsp;        } else if (OAuth2ParameterNames.ACCESS_TOKEN.equals(tokenType.getValue())) {</b>
+<b class="nc">&nbsp;            result = this.authorizationRepository.findByAccessTokenValue(token);</b>
+<b class="nc">&nbsp;        } else if (OAuth2ParameterNames.REFRESH_TOKEN.equals(tokenType.getValue())) {</b>
+<b class="nc">&nbsp;            result = this.authorizationRepository.findByRefreshTokenValue(token);</b>
+<b class="nc">&nbsp;        } else if (OidcParameterNames.ID_TOKEN.equals(tokenType.getValue())) {</b>
+<b class="nc">&nbsp;            result = this.authorizationRepository.findByOidcIdTokenValue(token);</b>
+<b class="nc">&nbsp;        } else if (OAuth2ParameterNames.USER_CODE.equals(tokenType.getValue())) {</b>
+<b class="nc">&nbsp;            result = this.authorizationRepository.findByUserCodeValue(token);</b>
+<b class="nc">&nbsp;        } else if (OAuth2ParameterNames.DEVICE_CODE.equals(tokenType.getValue())) {</b>
+<b class="nc">&nbsp;            result = this.authorizationRepository.findByDeviceCodeValue(token);</b>
+&nbsp;        } else {
+<b class="nc">&nbsp;            result = Optional.empty();</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        return result.map(this::toObject).orElse(null);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private OAuth2Authorization toObject(Authorization entity) {
+<b class="nc">&nbsp;        RegisteredClient registeredClient = this.registeredClientRepository.findById(entity.getRegisteredClientId());</b>
+<b class="nc">&nbsp;        if (registeredClient == null) {</b>
+<b class="nc">&nbsp;            throw new DataRetrievalFailureException(</b>
+<b class="nc">&nbsp;                    &quot;The RegisteredClient with id &#39;&quot; + entity.getRegisteredClientId() + &quot;&#39; was not found in the RegisteredClientRepository.&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        OAuth2Authorization.Builder builder = OAuth2Authorization.withRegisteredClient(registeredClient)</b>
+<b class="nc">&nbsp;                .id(entity.getId())</b>
+<b class="nc">&nbsp;                .principalName(entity.getPrincipalName())</b>
+<b class="nc">&nbsp;                .authorizationGrantType(resolveAuthorizationGrantType(entity.getAuthorizationGrantType()))</b>
+<b class="nc">&nbsp;                .authorizedScopes(StringUtils.commaDelimitedListToSet(entity.getAuthorizedScopes()))</b>
+<b class="nc">&nbsp;                .attributes(attributes -&gt; attributes.putAll(parseMap(entity.getAttributes())));</b>
+<b class="nc">&nbsp;        if (entity.getState() != null) {</b>
+<b class="nc">&nbsp;            builder.attribute(OAuth2ParameterNames.STATE, entity.getState());</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        if (entity.getAuthorizationCodeValue() != null) {</b>
+<b class="nc">&nbsp;            OAuth2AuthorizationCode authorizationCode = new OAuth2AuthorizationCode(</b>
+<b class="nc">&nbsp;                    entity.getAuthorizationCodeValue(),</b>
+<b class="nc">&nbsp;                    entity.getAuthorizationCodeIssuedAt(),</b>
+<b class="nc">&nbsp;                    entity.getAuthorizationCodeExpiresAt());</b>
+<b class="nc">&nbsp;            builder.token(authorizationCode, metadata -&gt; metadata.putAll(parseMap(entity.getAuthorizationCodeMetadata())));</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        if (entity.getAccessTokenValue() != null) {</b>
+<b class="nc">&nbsp;            OAuth2AccessToken accessToken = new OAuth2AccessToken(</b>
+&nbsp;                    OAuth2AccessToken.TokenType.BEARER,
+<b class="nc">&nbsp;                    entity.getAccessTokenValue(),</b>
+<b class="nc">&nbsp;                    entity.getAccessTokenIssuedAt(),</b>
+<b class="nc">&nbsp;                    entity.getAccessTokenExpiresAt(),</b>
+<b class="nc">&nbsp;                    StringUtils.commaDelimitedListToSet(entity.getAccessTokenScopes()));</b>
+<b class="nc">&nbsp;            builder.token(accessToken, metadata -&gt; metadata.putAll(parseMap(entity.getAccessTokenMetadata())));</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        if (entity.getRefreshTokenValue() != null) {</b>
+<b class="nc">&nbsp;            OAuth2RefreshToken refreshToken = new OAuth2RefreshToken(</b>
+<b class="nc">&nbsp;                    entity.getRefreshTokenValue(),</b>
+<b class="nc">&nbsp;                    entity.getRefreshTokenIssuedAt(),</b>
+<b class="nc">&nbsp;                    entity.getRefreshTokenExpiresAt());</b>
+<b class="nc">&nbsp;            builder.token(refreshToken, metadata -&gt; metadata.putAll(parseMap(entity.getRefreshTokenMetadata())));</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        if (entity.getOidcIdTokenValue() != null) {</b>
+<b class="nc">&nbsp;            OidcIdToken idToken = new OidcIdToken(</b>
+<b class="nc">&nbsp;                    entity.getOidcIdTokenValue(),</b>
+<b class="nc">&nbsp;                    entity.getOidcIdTokenIssuedAt(),</b>
+<b class="nc">&nbsp;                    entity.getOidcIdTokenExpiresAt(),</b>
+<b class="nc">&nbsp;                    parseMap(entity.getOidcIdTokenClaims()));</b>
+<b class="nc">&nbsp;            builder.token(idToken, metadata -&gt; metadata.putAll(parseMap(entity.getOidcIdTokenMetadata())));</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        if (entity.getUserCodeValue() != null) {</b>
+<b class="nc">&nbsp;            OAuth2UserCode userCode = new OAuth2UserCode(</b>
+<b class="nc">&nbsp;                    entity.getUserCodeValue(),</b>
+<b class="nc">&nbsp;                    entity.getUserCodeIssuedAt(),</b>
+<b class="nc">&nbsp;                    entity.getUserCodeExpiresAt());</b>
+<b class="nc">&nbsp;            builder.token(userCode, metadata -&gt; metadata.putAll(parseMap(entity.getUserCodeMetadata())));</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        if (entity.getDeviceCodeValue() != null) {</b>
+<b class="nc">&nbsp;            OAuth2DeviceCode deviceCode = new OAuth2DeviceCode(</b>
+<b class="nc">&nbsp;                    entity.getDeviceCodeValue(),</b>
+<b class="nc">&nbsp;                    entity.getDeviceCodeIssuedAt(),</b>
+<b class="nc">&nbsp;                    entity.getDeviceCodeExpiresAt());</b>
+<b class="nc">&nbsp;            builder.token(deviceCode, metadata -&gt; metadata.putAll(parseMap(entity.getDeviceCodeMetadata())));</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        return builder.build();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private Authorization toEntity(OAuth2Authorization authorization) {
+<b class="nc">&nbsp;        Authorization entity = new Authorization();</b>
+<b class="nc">&nbsp;        entity.setId(authorization.getId());</b>
+<b class="nc">&nbsp;        entity.setRegisteredClientId(authorization.getRegisteredClientId());</b>
+<b class="nc">&nbsp;        entity.setPrincipalName(authorization.getPrincipalName());</b>
+<b class="nc">&nbsp;        entity.setAuthorizationGrantType(authorization.getAuthorizationGrantType().getValue());</b>
+<b class="nc">&nbsp;        entity.setAuthorizedScopes(StringUtils.collectionToDelimitedString(authorization.getAuthorizedScopes(), &quot;,&quot;));</b>
+<b class="nc">&nbsp;        entity.setAttributes(writeMap(authorization.getAttributes()));</b>
+<b class="nc">&nbsp;        entity.setState(authorization.getAttribute(OAuth2ParameterNames.STATE));</b>
+&nbsp;
+<b class="nc">&nbsp;        OAuth2Authorization.Token&lt;OAuth2AuthorizationCode&gt; authorizationCode =</b>
+<b class="nc">&nbsp;                authorization.getToken(OAuth2AuthorizationCode.class);</b>
+<b class="nc">&nbsp;        setTokenValues(</b>
+&nbsp;                authorizationCode,
+<b class="nc">&nbsp;                entity::setAuthorizationCodeValue,</b>
+<b class="nc">&nbsp;                entity::setAuthorizationCodeIssuedAt,</b>
+<b class="nc">&nbsp;                entity::setAuthorizationCodeExpiresAt,</b>
+<b class="nc">&nbsp;                entity::setAuthorizationCodeMetadata</b>
+&nbsp;        );
+&nbsp;
+<b class="nc">&nbsp;        OAuth2Authorization.Token&lt;OAuth2AccessToken&gt; accessToken =</b>
+<b class="nc">&nbsp;                authorization.getToken(OAuth2AccessToken.class);</b>
+<b class="nc">&nbsp;        setTokenValues(</b>
+&nbsp;                accessToken,
+<b class="nc">&nbsp;                entity::setAccessTokenValue,</b>
+<b class="nc">&nbsp;                entity::setAccessTokenIssuedAt,</b>
+<b class="nc">&nbsp;                entity::setAccessTokenExpiresAt,</b>
+<b class="nc">&nbsp;                entity::setAccessTokenMetadata</b>
+&nbsp;        );
+<b class="nc">&nbsp;        if (accessToken != null &amp;&amp; accessToken.getToken().getScopes() != null) {</b>
+<b class="nc">&nbsp;            entity.setAccessTokenScopes(StringUtils.collectionToDelimitedString(accessToken.getToken().getScopes(), &quot;,&quot;));</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        OAuth2Authorization.Token&lt;OAuth2RefreshToken&gt; refreshToken =</b>
+<b class="nc">&nbsp;                authorization.getToken(OAuth2RefreshToken.class);</b>
+<b class="nc">&nbsp;        setTokenValues(</b>
+&nbsp;                refreshToken,
+<b class="nc">&nbsp;                entity::setRefreshTokenValue,</b>
+<b class="nc">&nbsp;                entity::setRefreshTokenIssuedAt,</b>
+<b class="nc">&nbsp;                entity::setRefreshTokenExpiresAt,</b>
+<b class="nc">&nbsp;                entity::setRefreshTokenMetadata</b>
+&nbsp;        );
+&nbsp;
+<b class="nc">&nbsp;        OAuth2Authorization.Token&lt;OidcIdToken&gt; oidcIdToken =</b>
+<b class="nc">&nbsp;                authorization.getToken(OidcIdToken.class);</b>
+<b class="nc">&nbsp;        setTokenValues(</b>
+&nbsp;                oidcIdToken,
+<b class="nc">&nbsp;                entity::setOidcIdTokenValue,</b>
+<b class="nc">&nbsp;                entity::setOidcIdTokenIssuedAt,</b>
+<b class="nc">&nbsp;                entity::setOidcIdTokenExpiresAt,</b>
+<b class="nc">&nbsp;                entity::setOidcIdTokenMetadata</b>
+&nbsp;        );
+<b class="nc">&nbsp;        if (oidcIdToken != null) {</b>
+<b class="nc">&nbsp;            entity.setOidcIdTokenClaims(writeMap(oidcIdToken.getClaims()));</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        OAuth2Authorization.Token&lt;OAuth2UserCode&gt; userCode =</b>
+<b class="nc">&nbsp;                authorization.getToken(OAuth2UserCode.class);</b>
+<b class="nc">&nbsp;        setTokenValues(</b>
+&nbsp;                userCode,
+<b class="nc">&nbsp;                entity::setUserCodeValue,</b>
+<b class="nc">&nbsp;                entity::setUserCodeIssuedAt,</b>
+<b class="nc">&nbsp;                entity::setUserCodeExpiresAt,</b>
+<b class="nc">&nbsp;                entity::setUserCodeMetadata</b>
+&nbsp;        );
+&nbsp;
+<b class="nc">&nbsp;        OAuth2Authorization.Token&lt;OAuth2DeviceCode&gt; deviceCode =</b>
+<b class="nc">&nbsp;                authorization.getToken(OAuth2DeviceCode.class);</b>
+<b class="nc">&nbsp;        setTokenValues(</b>
+&nbsp;                deviceCode,
+<b class="nc">&nbsp;                entity::setDeviceCodeValue,</b>
+<b class="nc">&nbsp;                entity::setDeviceCodeIssuedAt,</b>
+<b class="nc">&nbsp;                entity::setDeviceCodeExpiresAt,</b>
+<b class="nc">&nbsp;                entity::setDeviceCodeMetadata</b>
+&nbsp;        );
+&nbsp;
+<b class="nc">&nbsp;        return entity;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private void setTokenValues(
+&nbsp;            OAuth2Authorization.Token&lt;?&gt; token,
+&nbsp;            Consumer&lt;String&gt; tokenValueConsumer,
+&nbsp;            Consumer&lt;Instant&gt; issuedAtConsumer,
+&nbsp;            Consumer&lt;Instant&gt; expiresAtConsumer,
+&nbsp;            Consumer&lt;String&gt; metadataConsumer) {
+<b class="nc">&nbsp;        if (token != null) {</b>
+<b class="nc">&nbsp;            OAuth2Token oAuth2Token = token.getToken();</b>
+<b class="nc">&nbsp;            tokenValueConsumer.accept(oAuth2Token.getTokenValue());</b>
+<b class="nc">&nbsp;            issuedAtConsumer.accept(oAuth2Token.getIssuedAt());</b>
+<b class="nc">&nbsp;            expiresAtConsumer.accept(oAuth2Token.getExpiresAt());</b>
+<b class="nc">&nbsp;            metadataConsumer.accept(writeMap(token.getMetadata()));</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private Map&lt;String, Object&gt; parseMap(String data) {
+&nbsp;        try {
+<b class="nc">&nbsp;            return this.jsonMapper.readValue(data, new TypeReference&lt;Map&lt;String, Object&gt;&gt;() {</b>
+&nbsp;            });
+&nbsp;        } catch (Exception ex) {
+<b class="nc">&nbsp;            throw new IllegalArgumentException(ex.getMessage(), ex);</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private String writeMap(Map&lt;String, Object&gt; metadata) {
+&nbsp;        try {
+<b class="nc">&nbsp;            return this.jsonMapper.writeValueAsString(metadata);</b>
+&nbsp;        } catch (Exception ex) {
+<b class="nc">&nbsp;            throw new IllegalArgumentException(ex.getMessage(), ex);</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private static AuthorizationGrantType resolveAuthorizationGrantType(String authorizationGrantType) {
+<b class="nc">&nbsp;        if (AuthorizationGrantType.AUTHORIZATION_CODE.getValue().equals(authorizationGrantType)) {</b>
+<b class="nc">&nbsp;            return AuthorizationGrantType.AUTHORIZATION_CODE;</b>
+<b class="nc">&nbsp;        } else if (AuthorizationGrantType.CLIENT_CREDENTIALS.getValue().equals(authorizationGrantType)) {</b>
+<b class="nc">&nbsp;            return AuthorizationGrantType.CLIENT_CREDENTIALS;</b>
+<b class="nc">&nbsp;        } else if (AuthorizationGrantType.REFRESH_TOKEN.getValue().equals(authorizationGrantType)) {</b>
+<b class="nc">&nbsp;            return AuthorizationGrantType.REFRESH_TOKEN;</b>
+<b class="nc">&nbsp;        } else if (AuthorizationGrantType.DEVICE_CODE.getValue().equals(authorizationGrantType)) {</b>
+<b class="nc">&nbsp;            return AuthorizationGrantType.DEVICE_CODE;</b>
+&nbsp;        }
+<b class="nc">&nbsp;        return new AuthorizationGrantType(authorizationGrantType);              // Custom authorization grant type</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-01-10 15:25</div>
+</div>
+</body>
+</html>

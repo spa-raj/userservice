@@ -1,0 +1,320 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > SecurityConfig</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.vibevault.userservice.security</a>
+</div>
+
+<h1>Coverage Summary for Class: SecurityConfig (com.vibevault.userservice.security)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">SecurityConfig</td>
+<td class="coverageStat">
+  <span class="percent">
+    87.5%
+  </span>
+  <span class="absValue">
+    (14/16)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    82.7%
+  </span>
+  <span class="absValue">
+    (43/52)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">SecurityConfig$$SpringCGLIB$$0</td>
+  </tr>
+  <tr>
+    <td class="name">SecurityConfig$$SpringCGLIB$$FastClass$$0</td>
+  </tr>
+  <tr>
+    <td class="name">SecurityConfig$$SpringCGLIB$$FastClass$$1</td>
+  </tr>
+<tr>
+  <td class="name"><strong>Total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    87.5%
+  </span>
+  <span class="absValue">
+    (14/16)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    82.7%
+  </span>
+  <span class="absValue">
+    (43/52)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.vibevault.userservice.security;
+&nbsp;
+&nbsp;import org.springframework.context.annotation.Bean;
+&nbsp;import org.springframework.context.annotation.Configuration;
+&nbsp;import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+&nbsp;import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
+&nbsp;import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationServerConfigurer;
+&nbsp;import org.springframework.security.core.authority.AuthorityUtils;
+&nbsp;import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
+&nbsp;import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
+&nbsp;import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
+&nbsp;import org.springframework.security.web.SecurityFilterChain;
+&nbsp;
+&nbsp;import java.security.KeyPair;
+&nbsp;import java.security.KeyPairGenerator;
+&nbsp;import java.security.interfaces.RSAPrivateKey;
+&nbsp;import java.security.interfaces.RSAPublicKey;
+&nbsp;import java.util.Collections;
+&nbsp;import java.util.Set;
+&nbsp;import java.util.UUID;
+&nbsp;import java.util.stream.Collectors;
+&nbsp;
+&nbsp;import com.nimbusds.jose.jwk.JWKSet;
+&nbsp;import com.nimbusds.jose.jwk.RSAKey;
+&nbsp;import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
+&nbsp;import com.nimbusds.jose.jwk.source.JWKSource;
+&nbsp;import com.nimbusds.jose.proc.SecurityContext;
+&nbsp;import org.springframework.core.annotation.Order;
+&nbsp;import org.springframework.http.MediaType;
+&nbsp;import org.springframework.security.config.Customizer;
+&nbsp;import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+&nbsp;import org.springframework.security.core.userdetails.User;
+&nbsp;import org.springframework.security.core.userdetails.UserDetails;
+&nbsp;import org.springframework.security.core.userdetails.UserDetailsService;
+&nbsp;import org.springframework.security.oauth2.core.AuthorizationGrantType;
+&nbsp;import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
+&nbsp;import org.springframework.security.oauth2.core.oidc.OidcScopes;
+&nbsp;import org.springframework.security.oauth2.jwt.JwtDecoder;
+&nbsp;import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
+&nbsp;import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
+&nbsp;import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
+&nbsp;import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
+&nbsp;import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
+&nbsp;import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+&nbsp;import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+&nbsp;import org.springframework.security.config.http.SessionCreationPolicy;
+&nbsp;import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+&nbsp;import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
+&nbsp;
+&nbsp;//@Configuration
+&nbsp;//public class SecurityConfig {
+&nbsp;//    @Bean
+&nbsp;//    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+&nbsp;//        http
+&nbsp;//                .csrf(AbstractHttpConfigurer::disable)
+&nbsp;//                .cors(AbstractHttpConfigurer::disable)
+&nbsp;//                .authorizeHttpRequests(authorize -&gt; authorize.anyRequest().permitAll());
+&nbsp;//        return http.build();
+&nbsp;//    }
+&nbsp;//}
+&nbsp;
+&nbsp;@Configuration
+&nbsp;@EnableWebSecurity
+<b class="fc">&nbsp;public class SecurityConfig {</b>
+&nbsp;
+&nbsp;    @Bean
+&nbsp;    @Order(1)
+&nbsp;    public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http)
+&nbsp;            throws Exception {
+<b class="fc">&nbsp;        OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =</b>
+&nbsp;                new OAuth2AuthorizationServerConfigurer();
+&nbsp;
+<b class="fc">&nbsp;        http</b>
+<b class="fc">&nbsp;                .securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())</b>
+<b class="fc">&nbsp;                .with(authorizationServerConfigurer, (authorizationServer) -&gt;</b>
+<b class="fc">&nbsp;                        authorizationServer</b>
+<b class="fc">&nbsp;                                .oidc(Customizer.withDefaults())	// Enable OpenID Connect 1.0</b>
+&nbsp;                )
+<b class="fc">&nbsp;                .authorizeHttpRequests((authorize) -&gt;</b>
+&nbsp;                        authorize
+<b class="fc">&nbsp;                                .anyRequest().authenticated()</b>
+&nbsp;                )
+&nbsp;                // Redirect to the login page when not authenticated from the
+&nbsp;                // authorization endpoint
+<b class="fc">&nbsp;                .exceptionHandling((exceptions) -&gt; exceptions</b>
+<b class="fc">&nbsp;                        .defaultAuthenticationEntryPointFor(</b>
+&nbsp;                                new LoginUrlAuthenticationEntryPoint(&quot;/login&quot;),
+&nbsp;                                new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
+&nbsp;                        )
+&nbsp;                );
+&nbsp;
+<b class="fc">&nbsp;        return http.build();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Bean
+&nbsp;    @Order(2)
+&nbsp;    public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http)
+&nbsp;            throws Exception {
+<b class="fc">&nbsp;        http</b>
+<b class="fc">&nbsp;                .securityMatcher(&quot;/auth/**&quot;, &quot;/api/**&quot;)</b>
+<b class="fc">&nbsp;                .csrf(AbstractHttpConfigurer::disable)</b>
+<b class="fc">&nbsp;                .sessionManagement(session -&gt; session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))</b>
+<b class="fc">&nbsp;                .oauth2ResourceServer(oauth2 -&gt; oauth2.jwt(Customizer.withDefaults()))</b>
+<b class="fc">&nbsp;                .authorizeHttpRequests((authorize) -&gt; authorize</b>
+<b class="fc">&nbsp;                        .requestMatchers(&quot;/auth/login&quot;, &quot;/auth/signup&quot;, &quot;/auth/validate&quot;).permitAll()</b>
+<b class="fc">&nbsp;                        .anyRequest().authenticated()</b>
+&nbsp;                );
+&nbsp;
+<b class="fc">&nbsp;        return http.build();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Bean
+&nbsp;    @Order(3)
+&nbsp;    public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http)
+&nbsp;            throws Exception {
+<b class="fc">&nbsp;        http</b>
+<b class="fc">&nbsp;                .authorizeHttpRequests((authorize) -&gt; authorize</b>
+<b class="fc">&nbsp;                        .requestMatchers(&quot;/error&quot;).permitAll()</b>
+<b class="fc">&nbsp;                        .anyRequest().authenticated()</b>
+&nbsp;                )
+&nbsp;                // Form login handles the redirect to the login page from the
+&nbsp;                // authorization server filter chain
+<b class="fc">&nbsp;                .formLogin(Customizer.withDefaults());</b>
+&nbsp;
+<b class="fc">&nbsp;        return http.build();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    // TODO: Persist RSA keys to survive restarts - see https://github.com/spa-raj/userservice/issues/25
+&nbsp;    @Bean
+&nbsp;    public JWKSource&lt;SecurityContext&gt; jwkSource() {
+<b class="fc">&nbsp;        KeyPair keyPair = generateRsaKey();</b>
+<b class="fc">&nbsp;        RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();</b>
+<b class="fc">&nbsp;        RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();</b>
+<b class="fc">&nbsp;        RSAKey rsaKey = new RSAKey.Builder(publicKey)</b>
+<b class="fc">&nbsp;                .privateKey(privateKey)</b>
+<b class="fc">&nbsp;                .keyID(UUID.randomUUID().toString())</b>
+<b class="fc">&nbsp;                .build();</b>
+<b class="fc">&nbsp;        JWKSet jwkSet = new JWKSet(rsaKey);</b>
+<b class="fc">&nbsp;        return new ImmutableJWKSet&lt;&gt;(jwkSet);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private static KeyPair generateRsaKey() {
+&nbsp;        KeyPair keyPair;
+&nbsp;        try {
+<b class="fc">&nbsp;            KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(&quot;RSA&quot;);</b>
+<b class="fc">&nbsp;            keyPairGenerator.initialize(2048);</b>
+<b class="fc">&nbsp;            keyPair = keyPairGenerator.generateKeyPair();</b>
+&nbsp;        }
+&nbsp;        catch (Exception ex) {
+<b class="nc">&nbsp;            throw new IllegalStateException(ex);</b>
+&nbsp;        }
+<b class="fc">&nbsp;        return keyPair;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Bean
+&nbsp;    public JwtDecoder jwtDecoder(JWKSource&lt;SecurityContext&gt; jwkSource) {
+<b class="fc">&nbsp;        return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Bean
+&nbsp;    public AuthorizationServerSettings authorizationServerSettings() {
+<b class="fc">&nbsp;        return AuthorizationServerSettings.builder().build();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Bean
+&nbsp;    public OAuth2TokenCustomizer&lt;JwtEncodingContext&gt; jwtTokenCustomizer() {
+<b class="fc">&nbsp;        return (context) -&gt; {</b>
+<b class="nc">&nbsp;            if (OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType())) {</b>
+<b class="nc">&nbsp;                context.getClaims().claims((claims) -&gt; {</b>
+<b class="nc">&nbsp;                    Set&lt;String&gt; roles = AuthorityUtils.authorityListToSet(context.getPrincipal().getAuthorities())</b>
+<b class="nc">&nbsp;                            .stream()</b>
+<b class="nc">&nbsp;                            .filter(c -&gt; c.startsWith(&quot;ROLE_&quot;))</b>
+<b class="nc">&nbsp;                            .map(c -&gt; c.substring(5)) // Remove &quot;ROLE_&quot; prefix</b>
+<b class="nc">&nbsp;                            .collect(Collectors.collectingAndThen(Collectors.toSet(), Collections::unmodifiableSet));</b>
+<b class="nc">&nbsp;                    claims.put(&quot;roles&quot;, roles);</b>
+&nbsp;                });
+&nbsp;            }
+&nbsp;        };
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-01-10 15:25</div>
+</div>
+</body>
+</html>

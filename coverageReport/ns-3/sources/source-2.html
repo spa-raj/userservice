@@ -1,0 +1,266 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > DatabaseInitializer</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.vibevault.userservice.configurations</a>
+</div>
+
+<h1>Coverage Summary for Class: DatabaseInitializer (com.vibevault.userservice.configurations)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">DatabaseInitializer</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    75%
+  </span>
+  <span class="absValue">
+    (3/4)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    20%
+  </span>
+  <span class="absValue">
+    (2/10)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    18.6%
+  </span>
+  <span class="absValue">
+    (11/59)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.vibevault.userservice.configurations;
+&nbsp;
+&nbsp;import com.vibevault.userservice.models.Role;
+&nbsp;import com.vibevault.userservice.models.User;
+&nbsp;import com.vibevault.userservice.models.UserRole;
+&nbsp;import com.vibevault.userservice.repositories.RoleRepository;
+&nbsp;import com.vibevault.userservice.repositories.UserRepository;
+&nbsp;import com.vibevault.userservice.repositories.UserRoleRepository;
+&nbsp;import org.springframework.beans.factory.annotation.Autowired;
+&nbsp;import org.springframework.beans.factory.annotation.Value;
+&nbsp;import org.springframework.boot.CommandLineRunner;
+&nbsp;import org.springframework.security.crypto.password.PasswordEncoder;
+&nbsp;import org.springframework.security.oauth2.core.AuthorizationGrantType;
+&nbsp;import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
+&nbsp;import org.springframework.security.oauth2.core.oidc.OidcScopes;
+&nbsp;import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
+&nbsp;import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
+&nbsp;import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
+&nbsp;import org.springframework.stereotype.Component;
+&nbsp;
+&nbsp;import java.time.Instant;
+&nbsp;import java.util.Date;
+&nbsp;import java.util.Optional;
+&nbsp;import java.util.UUID;
+&nbsp;
+&nbsp;@Component
+&nbsp;public class DatabaseInitializer implements CommandLineRunner {
+&nbsp;
+&nbsp;    @Value(&quot;${admin.email}&quot;)
+&nbsp;    private String adminEmail;
+&nbsp;
+&nbsp;    @Value(&quot;${admin.password}&quot;)
+&nbsp;    private String adminPassword;
+&nbsp;
+&nbsp;    @Value(&quot;${admin.firstname}&quot;)
+&nbsp;    private String adminFirstName;
+&nbsp;
+&nbsp;    @Value(&quot;${admin.lastname}&quot;)
+&nbsp;    private String adminLastName;
+&nbsp;
+&nbsp;    @Value(&quot;${oauth2.client.id:vibevault-client}&quot;)
+&nbsp;    private String oauth2ClientId;
+&nbsp;
+&nbsp;    @Value(&quot;${oauth2.client.secret:#{null}}&quot;)
+&nbsp;    private String oauth2ClientSecret;
+&nbsp;
+&nbsp;    @Value(&quot;${oauth2.client.redirect-uri:http://127.0.0.1:8080/login/oauth2/code/vibevault}&quot;)
+&nbsp;    private String oauth2RedirectUri;
+&nbsp;
+&nbsp;    private final UserRepository userRepository;
+&nbsp;    private final RoleRepository roleRepository;
+&nbsp;    private final UserRoleRepository userRoleRepository;
+&nbsp;    private final PasswordEncoder passwordEncoder;
+&nbsp;    private final RegisteredClientRepository registeredClientRepository;
+&nbsp;
+&nbsp;    @Autowired
+&nbsp;    public DatabaseInitializer(UserRepository userRepository,
+&nbsp;                               RoleRepository roleRepository,
+&nbsp;                               UserRoleRepository userRoleRepository,
+&nbsp;                               PasswordEncoder passwordEncoder,
+<b class="fc">&nbsp;                               RegisteredClientRepository registeredClientRepository) {</b>
+<b class="fc">&nbsp;        this.userRepository = userRepository;</b>
+<b class="fc">&nbsp;        this.roleRepository = roleRepository;</b>
+<b class="fc">&nbsp;        this.userRoleRepository = userRoleRepository;</b>
+<b class="fc">&nbsp;        this.passwordEncoder = passwordEncoder;</b>
+<b class="fc">&nbsp;        this.registeredClientRepository = registeredClientRepository;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public void run(String... args) {
+&nbsp;        // Create admin role if it doesn&#39;t exist
+<b class="fc">&nbsp;        Role adminRole = roleRepository.findByName(&quot;ADMIN&quot;)</b>
+<b class="fc">&nbsp;                .orElseGet(() -&gt; {</b>
+<b class="nc">&nbsp;                    Role newRole = new Role();</b>
+<b class="nc">&nbsp;                    newRole.setName(&quot;ADMIN&quot;);</b>
+<b class="nc">&nbsp;                    return roleRepository.save(newRole);</b>
+&nbsp;                });
+&nbsp;
+&nbsp;        // Check if any admin users exist
+<b class="pc">&nbsp;        if (userRoleRepository.countUserRoleByRole_Id(adminRole.getId()) == 0) {</b>
+&nbsp;            // No admins exist, create the first admin user
+<b class="nc">&nbsp;            Optional&lt;User&gt; existingUser = userRepository.findUserByEmail(adminEmail);</b>
+&nbsp;            User adminUser;
+&nbsp;
+<b class="nc">&nbsp;            if (existingUser.isPresent()) {</b>
+<b class="nc">&nbsp;                adminUser = existingUser.get();</b>
+&nbsp;            } else {
+<b class="nc">&nbsp;                adminUser = new User();</b>
+<b class="nc">&nbsp;                adminUser.setEmail(adminEmail);</b>
+<b class="nc">&nbsp;                adminUser.setPassword(passwordEncoder.encode(adminPassword));</b>
+<b class="nc">&nbsp;                adminUser.setFirstName(adminFirstName);</b>
+<b class="nc">&nbsp;                adminUser.setLastName(adminLastName);</b>
+<b class="nc">&nbsp;                adminUser = userRepository.save(adminUser);</b>
+&nbsp;            }
+&nbsp;
+&nbsp;            // Assign admin role to user
+<b class="nc">&nbsp;            UserRole userRole = new UserRole();</b>
+<b class="nc">&nbsp;            userRole.setUser(adminUser);</b>
+<b class="nc">&nbsp;            userRole.setRole(adminRole);</b>
+<b class="nc">&nbsp;            userRole.setAssignedAt(new Date());</b>
+<b class="nc">&nbsp;            userRoleRepository.save(userRole);</b>
+&nbsp;        }
+&nbsp;
+&nbsp;        // Initialize OAuth2 client if it doesn&#39;t exist
+<b class="fc">&nbsp;        initializeOAuth2Client();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private void initializeOAuth2Client() {
+<b class="pc">&nbsp;        if (registeredClientRepository.findByClientId(oauth2ClientId) != null) {</b>
+&nbsp;            return; // Client already exists
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        String clientSecret = oauth2ClientSecret != null</b>
+<b class="nc">&nbsp;                ? oauth2ClientSecret</b>
+<b class="nc">&nbsp;                : UUID.randomUUID().toString();</b>
+&nbsp;
+<b class="nc">&nbsp;        RegisteredClient registeredClient = RegisteredClient.withId(UUID.randomUUID().toString())</b>
+<b class="nc">&nbsp;                .clientId(oauth2ClientId.trim())</b>
+<b class="nc">&nbsp;                .clientIdIssuedAt(Instant.now())</b>
+<b class="nc">&nbsp;                .clientSecret(passwordEncoder.encode(clientSecret))</b>
+<b class="nc">&nbsp;                .clientName(oauth2ClientId.trim())</b>
+<b class="nc">&nbsp;                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)</b>
+<b class="nc">&nbsp;                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)</b>
+<b class="nc">&nbsp;                .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)</b>
+<b class="nc">&nbsp;                .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)</b>
+<b class="nc">&nbsp;                .redirectUri(oauth2RedirectUri.trim())</b>
+<b class="nc">&nbsp;                .scope(OidcScopes.OPENID)</b>
+<b class="nc">&nbsp;                .scope(OidcScopes.PROFILE)</b>
+<b class="nc">&nbsp;                .scope(OidcScopes.EMAIL)</b>
+<b class="nc">&nbsp;                .scope(&quot;read&quot;)</b>
+<b class="nc">&nbsp;                .scope(&quot;write&quot;)</b>
+<b class="nc">&nbsp;                .clientSettings(ClientSettings.builder()</b>
+<b class="nc">&nbsp;                        .requireAuthorizationConsent(true)</b>
+<b class="nc">&nbsp;                        .requireProofKey(false)</b>
+<b class="nc">&nbsp;                        .build())</b>
+<b class="nc">&nbsp;                .build();</b>
+&nbsp;
+<b class="nc">&nbsp;        registeredClientRepository.save(registeredClient);</b>
+&nbsp;
+&nbsp;        // Log the generated secret if it was auto-generated
+<b class="nc">&nbsp;        if (oauth2ClientSecret == null) {</b>
+<b class="nc">&nbsp;            System.out.println(&quot;=&quot;.repeat(60));</b>
+<b class="nc">&nbsp;            System.out.println(&quot;OAuth2 Client Created:&quot;);</b>
+<b class="nc">&nbsp;            System.out.println(&quot;  Client ID: &quot; + oauth2ClientId);</b>
+<b class="nc">&nbsp;            System.out.println(&quot;  Client Secret: &quot; + clientSecret);</b>
+<b class="nc">&nbsp;            System.out.println(&quot;  (Set oauth2.client.secret in application.properties to use a fixed secret)&quot;);</b>
+<b class="nc">&nbsp;            System.out.println(&quot;=&quot;.repeat(60));</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-01-10 15:25</div>
+</div>
+</body>
+</html>
