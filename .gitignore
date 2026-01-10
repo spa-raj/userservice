@@ -37,3 +37,6 @@ build/
 
 ## Qodo configurations ##
 .qodo/
+
+## Coverage Reports ##
+coverageReport/

@@ -504,10 +504,8 @@ The application includes comprehensive unit and integration tests.
 - **KeyLocatorImplTest**: Validates JWT key locator implementation
 - **RoleServiceTest**: Tests role service logic
 
-### Coverage Report
-1. Navigate to the `coverageReport` directory
-2. Open `index.html` in a web browser
-3. Explore detailed coverage metrics
+### Code Quality
+SonarQube integration is planned for code quality and coverage analysis.
 
 ## References
 
