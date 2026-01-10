@@ -70,6 +70,10 @@ The OAuth2 implementation provides a full-fledged authorization server compliant
 - **Token Types**: Access tokens, refresh tokens, and OIDC ID tokens
 - **Metadata Discovery**: Standard well-known endpoints
 
+**OAuth2.0 Flow Diagram:**
+
+![OAuth2.0 Authorization Code Flow](docs/images/OAuth2.0-flow.png)
+
 ## Features
 
 ### Core Features
