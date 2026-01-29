@@ -1,0 +1,62 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: userservice-mysql
+    environment:
+      MYSQL_DATABASE: userservice
+      MYSQL_ROOT_PASSWORD: IFuckingLoveMySql@2025
+    ports:
+      - "3308:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pIFuckingLoveMySql@2025"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - userservice-network
+
+  userservice:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: userservice-app
+    environment:
+      PORT: 8081
+      DB_URL: jdbc:mysql://mysql:3306/userservice?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      DB_USERNAME: root
+      DB_PASSWORD: IFuckingLoveMySql@2025
+      ADMIN_EMAIL: admin@gmail.com
+      ADMIN_PASSWORD: abcd@1234
+      ADMIN_FIRST_NAME: Admin
+      ADMIN_LAST_NAME: User
+      CLIENT_ID: vibevault-client
+      CLIENT_SECRET: abc@12345
+      REDIRECT_URI: https://oauth.pstmn.io/v1/callback
+      ISSUER_URI: http://userservice:8081
+    ports:
+      - "8081:8081"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8081/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - userservice-network
+      - vibevault-network  # Join shared network for inter-service communication
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  userservice-network:
+    driver: bridge
+  vibevault-network:
+    external: true  # Shared network for inter-service communication
