@@ -11,6 +11,11 @@
   - [Prerequisites](#prerequisites)
   - [Environment Variables](#environment-variables)
   - [Steps](#steps)
+- [Docker](#docker)
+  - [Quick Start](#quick-start)
+  - [Building Manually](#building-manually)
+  - [Docker Compose Configuration](#docker-compose-configuration)
+  - [Inter-Service Communication](#inter-service-communication)
 - [API Endpoints](#api-endpoints)
   - [JJWT Authentication Endpoints](#jjwt-authentication-endpoints)
   - [OAuth2 Authorization Server Endpoints](#oauth2-authorization-server-endpoints)
@@ -111,13 +116,20 @@ The OAuth2 implementation provides a full-fledged authorization server compliant
 - Apache Commons Lang3
 - Spring Boot Actuator
 - Spring Boot DevTools
+- Docker / Docker Compose
 
 ## Setup Instructions
 
 ### Prerequisites
+
+**For local development:**
 - Java 21
 - Maven
 - MySQL database
+
+**For Docker deployment:**
+- Docker 20.10+
+- Docker Compose 2.0+
 
 ### Environment Variables
 
@@ -177,6 +189,124 @@ Configure the following environment variables for the application:
    ```bash
    mvn spring-boot:run
    ```
+
+## Docker
+
+### Quick Start
+
+The fastest way to run the userservice with all dependencies:
+
+```bash
+# Create the shared network (only needed once)
+docker network create vibevault-network
+
+# Start the application with MySQL
+docker-compose up -d
+```
+
+The application will be available at `http://localhost:8081` once the health checks pass.
+
+### Prerequisites
+
+- Docker 20.10+
+- Docker Compose 2.0+
+
+### Building Manually
+
+Build the Docker image:
+
+```bash
+docker build -t userservice:latest .
+```
+
+The Dockerfile uses a multi-stage build:
+- **Build stage**: Uses `eclipse-temurin:21-jdk-alpine` to compile the application
+- **Runtime stage**: Uses `eclipse-temurin:21-jre-alpine` for a smaller final image (~200MB)
+
+### Docker Compose Configuration
+
+The `docker-compose.yml` includes:
+
+| Service | Description | Port |
+|---------|-------------|------|
+| `mysql` | MySQL 8.0 database | 3308:3306 |
+| `userservice` | User Service application | 8081:8081 |
+
+#### Environment Variables
+
+When running with Docker, these environment variables are configured in `docker-compose.yml`:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PORT` | `8081` | Application server port |
+| `DB_URL` | `jdbc:mysql://mysql:3306/userservice...` | JDBC connection URL |
+| `DB_USERNAME` | `root` | Database username |
+| `DB_PASSWORD` | - | Database password |
+| `ADMIN_EMAIL` | - | Initial admin email |
+| `ADMIN_PASSWORD` | - | Initial admin password |
+| `ADMIN_FIRST_NAME` | - | Admin first name |
+| `ADMIN_LAST_NAME` | - | Admin last name |
+| `CLIENT_ID` | - | OAuth2 client ID |
+| `CLIENT_SECRET` | - | OAuth2 client secret |
+| `REDIRECT_URI` | - | OAuth2 redirect URI |
+| `ISSUER_URI` | `http://localhost:8081` | OAuth2 issuer URI (use `http://userservice:8081` for Docker) |
+
+#### Useful Commands
+
+```bash
+# Start services
+docker-compose up -d
+
+# View logs
+docker-compose logs -f userservice
+
+# Stop services
+docker-compose down
+
+# Rebuild after code changes
+docker-compose up -d --build
+
+# Remove volumes (reset database)
+docker-compose down -v
+```
+
+### Inter-Service Communication
+
+For communication with other services (e.g., productservice) in Docker:
+
+1. **Create the shared network** (if not already created):
+   ```bash
+   docker network create vibevault-network
+   ```
+
+2. **Configure the issuer URI**: When running in Docker, set `ISSUER_URI=http://userservice:8081` so that JWT tokens have the correct issuer claim for inter-service validation.
+
+3. **Network topology**:
+   ```
+   ┌─────────────────────────────────────────────────────────┐
+   │                   vibevault-network                      │
+   │  ┌─────────────┐      ┌─────────────┐                   │
+   │  │ userservice │◄────►│productservice│                  │
+   │  │   :8081     │      │    :8080     │                  │
+   │  └─────────────┘      └─────────────┘                   │
+   └─────────────────────────────────────────────────────────┘
+   ```
+
+4. **JWT validation**: Other services can validate tokens by fetching the JWKS from `http://userservice:8081/oauth2/jwks` within the Docker network.
+
+### Health Checks
+
+The container includes health checks that verify the application is running:
+
+```bash
+# Check container health status
+docker-compose ps
+
+# View health check logs
+docker inspect --format='{{json .State.Health}}' userservice-app | jq
+```
+
+The health check endpoint is available at `/actuator/health`.
 
 ## API Endpoints
 
