@@ -98,7 +98,7 @@ public class SecurityConfig {
     public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http)
             throws Exception {
         http
-                .securityMatcher("/auth/**", "/api/**")
+                .securityMatcher("/auth/**", "/api/**", "/roles/**")
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
