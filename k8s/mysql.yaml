@@ -1,0 +1,102 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pvc
+  namespace: vibevault
+  labels:
+    app: userservice-mysql
+    part-of: vibevault
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: userservice-mysql
+  namespace: vibevault
+  labels:
+    app: userservice-mysql
+    part-of: vibevault
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: userservice-mysql
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: userservice-mysql
+        part-of: vibevault
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8.0
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_DATABASE
+              value: userservice
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: userservice-secret
+                  key: DB_PASSWORD
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 500m
+              memory: 768Mi
+          volumeMounts:
+            - name: mysql-storage
+              mountPath: /var/lib/mysql
+          readinessProbe:
+            exec:
+              command:
+                - mysqladmin
+                - ping
+                - -h
+                - "127.0.0.1"
+                - --protocol=TCP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            exec:
+              command:
+                - mysqladmin
+                - ping
+                - -h
+                - "127.0.0.1"
+                - --protocol=TCP
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 5
+      volumes:
+        - name: mysql-storage
+          persistentVolumeClaim:
+            claimName: mysql-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: userservice-mysql
+  namespace: vibevault
+  labels:
+    app: userservice-mysql
+    part-of: vibevault
+spec:
+  type: ClusterIP
+  selector:
+    app: userservice-mysql
+  ports:
+    - port: 3306
+      targetPort: 3306
+      protocol: TCP

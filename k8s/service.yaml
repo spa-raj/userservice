@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: userservice
+  namespace: vibevault
+  labels:
+    app: userservice
+    part-of: vibevault
+spec:
+  type: ClusterIP
+  selector:
+    app: userservice
+  ports:
+    - port: 80
+      targetPort: 8081
+      protocol: TCP

@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: userservice-config
+  namespace: vibevault
+  labels:
+    app: userservice
+    part-of: vibevault
+data:
+  PORT: "8081"
+  DB_URL: "jdbc:mysql://userservice-mysql:3306/userservice?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+  ADMIN_EMAIL: "admin@gmail.com"
+  ADMIN_FIRST_NAME: "Admin"
+  ADMIN_LAST_NAME: "User"
+  CLIENT_ID: "vibevault-client"
+  REDIRECT_URI: "https://oauth.pstmn.io/v1/callback"
+  ISSUER_URI: "http://userservice:8081"
+  SPRING_PROFILES_ACTIVE: "default"
