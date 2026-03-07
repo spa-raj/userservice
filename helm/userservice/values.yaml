@@ -1,0 +1,58 @@
+replicaCount: 2
+
+image:
+  repository: userservice
+  tag: latest
+  pullPolicy: IfNotPresent
+
+containerPort: 8081
+
+service:
+  type: ClusterIP
+  port: 80
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    cpu: 500m
+    memory: 768Mi
+
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 0
+    maxSurge: 1
+
+config:
+  # Leave empty to auto-generate from mysql service name.
+  # Override for external DB scenarios.
+  # dbUrl: ""
+  adminEmail: "admin@gmail.com"
+  adminFirstName: "Admin"
+  adminLastName: "User"
+  clientId: "vibevault-client"
+  redirectUri: "https://oauth.pstmn.io/v1/callback"
+  issuerUri: "http://userservice:8081"
+  springProfilesActive: "default"
+
+secrets:
+  dbUsername: "root"
+  dbPassword: "IFuckingLoveMySql@2025"
+  adminPassword: "abcd@1234"
+  clientSecret: "abc@12345"
+
+mysql:
+  enabled: true
+  image: "mysql:8.0"
+  storage: 1Gi
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 768Mi
+
+createNamespace: false

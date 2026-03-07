@@ -1,0 +1,18 @@
+{{- if .Values.mysql.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "userservice.fullname" . }}-mysql
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "userservice.fullname" . }}-mysql
+    part-of: vibevault
+spec:
+  type: ClusterIP
+  selector:
+    app: {{ include "userservice.fullname" . }}-mysql
+  ports:
+    - port: 3306
+      targetPort: 3306
+      protocol: TCP
+{{- end }}
