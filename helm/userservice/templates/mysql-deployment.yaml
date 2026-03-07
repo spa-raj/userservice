@@ -1,0 +1,72 @@
+{{- if .Values.mysql.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "userservice.fullname" . }}-mysql
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "userservice.fullname" . }}-mysql
+    part-of: vibevault
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "userservice.fullname" . }}-mysql
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: {{ include "userservice.fullname" . }}-mysql
+        part-of: vibevault
+    spec:
+      containers:
+        - name: mysql
+          image: {{ .Values.mysql.image }}
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_DATABASE
+              value: userservice
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "userservice.fullname" . }}-secret
+                  key: DB_PASSWORD
+          resources:
+            requests:
+              cpu: {{ .Values.mysql.resources.requests.cpu }}
+              memory: {{ .Values.mysql.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.mysql.resources.limits.cpu }}
+              memory: {{ .Values.mysql.resources.limits.memory }}
+          volumeMounts:
+            - name: mysql-storage
+              mountPath: /var/lib/mysql
+          readinessProbe:
+            exec:
+              command:
+                - mysqladmin
+                - ping
+                - -h
+                - "127.0.0.1"
+                - --protocol=TCP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            exec:
+              command:
+                - mysqladmin
+                - ping
+                - -h
+                - "127.0.0.1"
+                - --protocol=TCP
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 5
+      volumes:
+        - name: mysql-storage
+          persistentVolumeClaim:
+            claimName: {{ include "userservice.fullname" . }}-mysql-pvc
+{{- end }}

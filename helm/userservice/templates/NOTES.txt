@@ -1,0 +1,20 @@
+Thank you for installing {{ .Chart.Name }}.
+
+Your release is named: {{ .Release.Name }}
+Namespace: {{ .Release.Namespace }}
+
+To check the status of your deployment:
+
+  kubectl get deployments -n {{ .Release.Namespace }}
+
+To access the userservice:
+
+  kubectl port-forward svc/{{ include "userservice.fullname" . }} {{ .Values.containerPort }}:{{ .Values.service.port }} -n {{ .Release.Namespace }}
+
+{{- if .Values.mysql.enabled }}
+
+MySQL is enabled and deployed as part of this release.
+To check MySQL status:
+
+  kubectl get pods -l app={{ include "userservice.fullname" . }}-mysql -n {{ .Release.Namespace }}
+{{- end }}

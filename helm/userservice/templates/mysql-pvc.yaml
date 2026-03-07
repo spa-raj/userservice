@@ -1,0 +1,16 @@
+{{- if .Values.mysql.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "userservice.fullname" . }}-mysql-pvc
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "userservice.fullname" . }}-mysql
+    part-of: vibevault
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.mysql.storage }}
+{{- end }}
