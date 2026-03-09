@@ -37,11 +37,9 @@ config:
   issuerUri: "http://userservice:8081"
   springProfilesActive: "default"
 
-secrets:
-  dbUsername: "root"
-  dbPassword: "IFuckingLoveMySql@2025"
-  adminPassword: "abcd@1234"
-  clientSecret: "abc@12345"
+externalSecrets:
+  dbSecretName: "vibevault/dev/userservice/db-credentials"
+  appSecretName: "vibevault/dev/userservice/app-secrets"
 
 mysql:
   enabled: true
