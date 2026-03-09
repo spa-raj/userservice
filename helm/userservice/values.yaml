@@ -42,7 +42,7 @@ externalSecrets:
   appSecretName: "vibevault/dev/userservice/app-secrets"
 
 mysql:
-  enabled: true
+  enabled: false
   image: "mysql:8.0"
   storage: 1Gi
   resources:
