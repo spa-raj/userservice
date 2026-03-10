@@ -11,13 +11,14 @@ import org.springframework.security.oauth2.server.authorization.token.JwtEncodin
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 import org.springframework.security.web.SecurityFilterChain;
 
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
+import java.security.KeyFactory;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 import com.nimbusds.jose.jwk.JWKSet;
@@ -29,19 +30,8 @@ import org.springframework.core.annotation.Order;
 import org.springframework.http.MediaType;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.oauth2.core.AuthorizationGrantType;
-import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
-import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
-import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
-import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
-import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -126,31 +116,41 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // TODO: Persist RSA keys to survive restarts - see https://github.com/spa-raj/userservice/issues/25
     @Bean
-    public JWKSource<SecurityContext> jwkSource() {
-        KeyPair keyPair = generateRsaKey();
-        RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
-        RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
-        RSAKey rsaKey = new RSAKey.Builder(publicKey)
-                .privateKey(privateKey)
-                .keyID(UUID.randomUUID().toString())
-                .build();
-        JWKSet jwkSet = new JWKSet(rsaKey);
-        return new ImmutableJWKSet<>(jwkSet);
+    public JWKSource<SecurityContext> jwkSource(
+            @Value("${jwt.rsa.private-key}") String privateKeyPem,
+            @Value("${jwt.rsa.public-key}") String publicKeyPem) {
+        try {
+            RSAPrivateKey privateKey = parsePrivateKey(privateKeyPem);
+            RSAPublicKey publicKey = parsePublicKey(publicKeyPem);
+            RSAKey rsaKey = new RSAKey.Builder(publicKey)
+                    .privateKey(privateKey)
+                    .keyID("jwt-signing-key")
+                    .build();
+            return new ImmutableJWKSet<>(new JWKSet(rsaKey));
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to load RSA keys for JWT signing", e);
+        }
     }
 
-    private static KeyPair generateRsaKey() {
-        KeyPair keyPair;
-        try {
-            KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-            keyPairGenerator.initialize(2048);
-            keyPair = keyPairGenerator.generateKeyPair();
-        }
-        catch (Exception ex) {
-            throw new IllegalStateException(ex);
-        }
-        return keyPair;
+    private static RSAPrivateKey parsePrivateKey(String pem) throws Exception {
+        String base64 = pem
+                .replace("-----BEGIN PRIVATE KEY-----", "")
+                .replace("-----END PRIVATE KEY-----", "")
+                .replaceAll("\\s", "");
+        byte[] decoded = Base64.getDecoder().decode(base64);
+        PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(decoded);
+        return (RSAPrivateKey) KeyFactory.getInstance("RSA").generatePrivate(spec);
+    }
+
+    private static RSAPublicKey parsePublicKey(String pem) throws Exception {
+        String base64 = pem
+                .replace("-----BEGIN PUBLIC KEY-----", "")
+                .replace("-----END PUBLIC KEY-----", "")
+                .replaceAll("\\s", "");
+        byte[] decoded = Base64.getDecoder().decode(base64);
+        X509EncodedKeySpec spec = new X509EncodedKeySpec(decoded);
+        return (RSAPublicKey) KeyFactory.getInstance("RSA").generatePublic(spec);
     }
 
     @Bean
