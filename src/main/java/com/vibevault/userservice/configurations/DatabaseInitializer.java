@@ -91,29 +91,34 @@ public class DatabaseInitializer implements CommandLineRunner {
     }
 
     private void initializeAdminUser(Role adminRole) {
-        if (userRoleRepository.countUserRoleByRole_Id(adminRole.getId()) == 0) {
+        User adminUser = userRepository.findUserByEmail(adminEmail)
+                .orElseGet(() -> {
+                    try {
+                        User newUser = new User();
+                        newUser.setEmail(adminEmail);
+                        newUser.setPassword(passwordEncoder.encode(adminPassword));
+                        newUser.setFirstName(adminFirstName);
+                        newUser.setLastName(adminLastName);
+                        return userRepository.save(newUser);
+                    } catch (DataIntegrityViolationException e) {
+                        log.warn("Admin user creation conflict (likely another pod)", e);
+                        return userRepository.findUserByEmail(adminEmail)
+                                .orElseThrow(() -> new IllegalStateException("Admin user creation failed", e));
+                    }
+                });
+
+        if (!userRoleRepository.existsByUser_IdAndRole_Id(adminUser.getId(), adminRole.getId())) {
             try {
-                Optional<User> existingUser = userRepository.findUserByEmail(adminEmail);
-                User adminUser;
-
-                if (existingUser.isPresent()) {
-                    adminUser = existingUser.get();
-                } else {
-                    adminUser = new User();
-                    adminUser.setEmail(adminEmail);
-                    adminUser.setPassword(passwordEncoder.encode(adminPassword));
-                    adminUser.setFirstName(adminFirstName);
-                    adminUser.setLastName(adminLastName);
-                    adminUser = userRepository.save(adminUser);
-                }
-
                 UserRole userRole = new UserRole();
                 userRole.setUser(adminUser);
                 userRole.setRole(adminRole);
                 userRole.setAssignedAt(new Date());
                 userRoleRepository.save(userRole);
             } catch (DataIntegrityViolationException e) {
-                log.warn("Admin user/role assignment conflict (likely another pod)", e);
+                log.warn("Admin role assignment conflict (likely another pod)", e);
+                if (!userRoleRepository.existsByUser_IdAndRole_Id(adminUser.getId(), adminRole.getId())) {
+                    throw new IllegalStateException("Admin role assignment failed", e);
+                }
             }
         }
     }
@@ -153,6 +158,9 @@ public class DatabaseInitializer implements CommandLineRunner {
             registeredClientRepository.save(registeredClient);
         } catch (DataIntegrityViolationException e) {
             log.warn("OAuth2 client registration conflict (likely another pod)", e);
+            if (registeredClientRepository.findByClientId(trimmedClientId) == null) {
+                throw new IllegalStateException("OAuth2 client registration failed", e);
+            }
         }
     }
 }
