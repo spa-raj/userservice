@@ -6,6 +6,7 @@ import com.vibevault.userservice.models.UserRole;
 import com.vibevault.userservice.repositories.RoleRepository;
 import com.vibevault.userservice.repositories.UserRepository;
 import com.vibevault.userservice.repositories.UserRoleRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
@@ -24,6 +25,7 @@ import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
 
+@Slf4j
 @Component
 public class DatabaseInitializer implements CommandLineRunner {
 
@@ -83,7 +85,7 @@ public class DatabaseInitializer implements CommandLineRunner {
                         return roleRepository.save(newRole);
                     });
         } catch (DataIntegrityViolationException e) {
-            // Another pod created the role — just fetch it
+            log.warn("ADMIN role creation conflict (likely another pod) — fetching existing", e);
             return roleRepository.findByName("ADMIN").orElseThrow();
         }
     }
@@ -111,13 +113,14 @@ public class DatabaseInitializer implements CommandLineRunner {
                 userRole.setAssignedAt(new Date());
                 userRoleRepository.save(userRole);
             } catch (DataIntegrityViolationException e) {
-                // Another pod already created the admin user — safe to ignore
+                log.warn("Admin user/role assignment conflict (likely another pod)", e);
             }
         }
     }
 
     private void initializeOAuth2Client() {
-        if (registeredClientRepository.findByClientId(oauth2ClientId) != null) {
+        String trimmedClientId = oauth2ClientId.trim();
+        if (registeredClientRepository.findByClientId(trimmedClientId) != null) {
             return;
         }
 
@@ -127,10 +130,10 @@ public class DatabaseInitializer implements CommandLineRunner {
                     : UUID.randomUUID().toString();
 
             RegisteredClient registeredClient = RegisteredClient.withId(UUID.randomUUID().toString())
-                    .clientId(oauth2ClientId.trim())
+                    .clientId(trimmedClientId)
                     .clientIdIssuedAt(Instant.now())
                     .clientSecret(passwordEncoder.encode(clientSecret))
-                    .clientName(oauth2ClientId.trim())
+                    .clientName(trimmedClientId)
                     .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                     .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                     .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
@@ -149,7 +152,7 @@ public class DatabaseInitializer implements CommandLineRunner {
 
             registeredClientRepository.save(registeredClient);
         } catch (DataIntegrityViolationException e) {
-            // Another pod registered the client — safe to ignore
+            log.warn("OAuth2 client registration conflict (likely another pod)", e);
         }
     }
 }
