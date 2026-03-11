@@ -22,6 +22,29 @@ spec:
       labels:
         {{- include "userservice.labels" . | nindent 8 }}
     spec:
+      initContainers:
+        - name: copy-migrations
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["sh", "-c", "cd /tmp && unzip -o /app/app.jar 'BOOT-INF/classes/db/migration/*' && cp BOOT-INF/classes/db/migration/* /flyway-sql/"]
+          volumeMounts:
+            - name: flyway-sql
+              mountPath: /flyway-sql
+        - name: flyway-migrate
+          image: flyway/flyway:11
+          envFrom:
+            - configMapRef:
+                name: {{ include "userservice.fullname" . }}-config
+            - secretRef:
+                name: {{ include "userservice.fullname" . }}-secret
+          command: ["sh", "-c", "flyway -url=\"${DB_URL}?allowPublicKeyRetrieval=true&useSSL=false\" -user=\"$DB_USERNAME\" -password=\"$DB_PASSWORD\" -locations=filesystem:/flyway/sql -connectRetries=3 migrate"]
+          volumeMounts:
+            - name: flyway-sql
+              mountPath: /flyway/sql
+              readOnly: true
+      volumes:
+        - name: flyway-sql
+          emptyDir: {}
       containers:
         - name: {{ include "userservice.name" . }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
