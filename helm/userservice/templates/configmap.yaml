@@ -15,3 +15,4 @@ data:
   REDIRECT_URI: {{ .Values.config.redirectUri | quote }}
   ISSUER_URI: {{ .Values.config.issuerUri | quote }}
   SPRING_PROFILES_ACTIVE: {{ .Values.config.springProfilesActive | quote }}
+  SPRING_FLYWAY_ENABLED: "false"

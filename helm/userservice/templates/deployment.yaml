@@ -31,13 +31,26 @@ spec:
             - name: flyway-sql
               mountPath: /flyway-sql
         - name: flyway-migrate
-          image: flyway/flyway:11
-          envFrom:
-            - configMapRef:
-                name: {{ include "userservice.fullname" . }}-config
-            - secretRef:
-                name: {{ include "userservice.fullname" . }}-secret
-          command: ["sh", "-c", "flyway -url=\"${DB_URL}?allowPublicKeyRetrieval=true&useSSL=false\" -user=\"$DB_USERNAME\" -password=\"$DB_PASSWORD\" -locations=filesystem:/flyway/sql -connectRetries=3 migrate"]
+          image: flyway/flyway:11.20
+          env:
+            - name: FLYWAY_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "userservice.fullname" . }}-config
+                  key: DB_URL
+            - name: FLYWAY_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "userservice.fullname" . }}-secret
+                  key: DB_USERNAME
+            - name: FLYWAY_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "userservice.fullname" . }}-secret
+                  key: DB_PASSWORD
+            - name: FLYWAY_CONNECT_RETRIES
+              value: "3"
+          command: ["flyway", "-locations=filesystem:/flyway/sql", "migrate"]
           volumeMounts:
             - name: flyway-sql
               mountPath: /flyway/sql
