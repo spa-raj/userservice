@@ -52,13 +52,19 @@ jobs:
 
       - name: Wait for seed job to complete
         run: |
-          kubectl wait --for=condition=complete --for=condition=failed job/seed-users -n vibevault --timeout=600s
-          STATUS=$(kubectl get job seed-users -n vibevault -o jsonpath='{.status.conditions[?(@.type=="Complete")].status}')
-          if [ "$STATUS" != "True" ]; then
-            echo "Seed job failed!"
-            exit 1
-          fi
+          while true; do
+            COMPLETE=$(kubectl get job seed-users -n vibevault -o jsonpath='{.status.conditions[?(@.type=="Complete")].status}' 2>/dev/null)
+            FAILED=$(kubectl get job seed-users -n vibevault -o jsonpath='{.status.conditions[?(@.type=="Failed")].status}' 2>/dev/null)
+            if [ "$COMPLETE" = "True" ]; then
+              echo "Seed job completed successfully."
+              break
+            elif [ "$FAILED" = "True" ]; then
+              echo "Seed job failed!"
+              exit 1
+            fi
+            sleep 5
+          done
 
       - name: Print seed job logs
         if: always()
-        run: kubectl logs job/seed-users -n vibevault
+        run: kubectl logs job/seed-users -n vibevault --pod-running-timeout=10s 2>&1 || echo "Could not retrieve logs (pod may have been cleaned up)"
