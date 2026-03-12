@@ -1,0 +1,41 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: seed-users
+  namespace: vibevault
+  labels:
+    app: userservice
+    part-of: vibevault
+    purpose: seed-data
+spec:
+  backoffLimit: 1
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      labels:
+        app: userservice
+        purpose: seed-data
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: seed-users
+          image: IMAGE_PLACEHOLDER    # Replaced by run.sh with actual image from deployment
+          imagePullPolicy: Always
+          command:
+            - sh
+            - -c
+            - |
+              export DB_URL="${DB_URL}&rewriteBatchedStatements=true"
+              java $JAVA_OPTS -jar app.jar --spring.profiles.active=seed
+          envFrom:
+            - configMapRef:
+                name: userservice-config
+            - secretRef:
+                name: userservice-secret
+          resources:
+            requests:
+              cpu: 500m
+              memory: 768Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
