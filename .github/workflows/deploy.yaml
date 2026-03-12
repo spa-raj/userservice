@@ -1,0 +1,99 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: ap-south-1
+  EKS_CLUSTER_NAME: vibevault-dev
+  ECR_REPO: vibevault-dev/user-service
+  HELM_RELEASE: userservice
+  HELM_CHART_PATH: helm/userservice
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  build-and-push:
+    name: Build & Push Image
+    runs-on: ubuntu-latest
+    environment: dev
+    outputs:
+      image_tag: ${{ steps.meta.outputs.image_tag }}
+      image_uri: ${{ steps.meta.outputs.image_uri }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set image metadata
+        id: meta
+        run: |
+          IMAGE_TAG="${GITHUB_SHA::8}"
+          REGISTRY="${{ steps.ecr-login.outputs.registry }}"
+          IMAGE_URI="${REGISTRY}/${{ env.ECR_REPO }}:${IMAGE_TAG}"
+          echo "image_tag=${IMAGE_TAG}" >> "$GITHUB_OUTPUT"
+          echo "image_uri=${IMAGE_URI}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push Docker image
+        run: |
+          docker build -t ${{ steps.meta.outputs.image_uri }} .
+          docker tag ${{ steps.meta.outputs.image_uri }} ${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_REPO }}:latest
+          docker push ${{ steps.meta.outputs.image_uri }}
+          docker push ${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_REPO }}:latest
+
+  deploy:
+    name: Deploy to EKS
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    environment: dev
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Configure kubectl
+        run: aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
+
+      - name: Get deploy parameters
+        id: params
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          ECR_REGISTRY="${ACCOUNT_ID}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com"
+          RDS_ADDRESS=$(aws rds describe-db-instances \
+            --db-instance-identifier ${{ env.EKS_CLUSTER_NAME }}-mysql \
+            --query 'DBInstances[0].Endpoint.Address' --output text)
+          echo "ecr_registry=${ECR_REGISTRY}" >> "$GITHUB_OUTPUT"
+          echo "rds_address=${RDS_ADDRESS}" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy with Helm
+        run: |
+          helm upgrade --install ${{ env.HELM_RELEASE }} ${{ env.HELM_CHART_PATH }} \
+            -n vibevault \
+            --set image.repository=${{ steps.params.outputs.ecr_registry }}/${{ env.ECR_REPO }} \
+            --set image.tag=${{ needs.build-and-push.outputs.image_tag }} \
+            --set config.dbUrl="jdbc:mysql://${{ steps.params.outputs.rds_address }}:3306/userservice?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC" \
+            --wait --timeout 300s
+
+      - name: Verify deployment
+        run: kubectl rollout status deployment/${{ env.HELM_RELEASE }} -n vibevault --timeout=180s
