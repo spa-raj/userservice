@@ -1,0 +1,59 @@
+name: Seed Data
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: ap-south-1
+  EKS_CLUSTER_NAME: vibevault-dev
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  seed:
+    name: Seed User Data
+    runs-on: ubuntu-latest
+    environment: dev
+    concurrency:
+      group: seed-userservice-dev
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Configure kubectl
+        run: aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
+
+      - name: Resolve image from deployment
+        id: image
+        run: |
+          IMAGE=$(kubectl get deployment userservice -n vibevault \
+            -o jsonpath='{.spec.template.spec.containers[0].image}')
+          echo "image=${IMAGE}" >> "$GITHUB_OUTPUT"
+          echo "Using image: ${IMAGE}"
+
+      - name: Delete previous seed job if exists
+        run: kubectl delete job seed-users -n vibevault --ignore-not-found
+
+      - name: Apply seed job
+        run: |
+          sed "s|image: IMAGE_PLACEHOLDER|image: ${{ steps.image.outputs.image }}|" \
+            scripts/seed-data/seed-job.yaml | kubectl apply -f -
+
+      - name: Wait for seed job to complete
+        run: |
+          kubectl wait --for=condition=complete job/seed-users -n vibevault --timeout=600s
+
+      - name: Print seed job logs
+        if: always()
+        run: kubectl logs job/seed-users -n vibevault

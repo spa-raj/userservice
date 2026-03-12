@@ -1,0 +1,8 @@
+spring:
+  main:
+    web-application-type: none
+  datasource:
+    hikari:
+      maximum-pool-size: 5
+  jpa:
+    show-sql: false
