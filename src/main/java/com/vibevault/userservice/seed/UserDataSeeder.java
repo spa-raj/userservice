@@ -100,10 +100,22 @@ public class UserDataSeeder implements CommandLineRunner {
         log.info("BCrypt hash computed.");
 
         Map<String, byte[]> roleIds = ensureRoles();
-        List<UserRecord> users = seedUsers(hashedPassword);
-        seedUserRoles(users, roleIds);
-        seedUserProfiles(users);
-        seedAddresses(users);
+        seedUsers(hashedPassword);
+
+        // Fetch all seed users (by email domain) for relationship seeding — handles partial re-runs
+        List<UserRecord> allSeedUsers = jdbcTemplate.query(
+                "SELECT id, email FROM users WHERE email LIKE '%@vibevault.test' ORDER BY email",
+                (rs, rowNum) -> {
+                    String email = rs.getString("email");
+                    int idx = Integer.parseInt(email.substring(email.lastIndexOf('.', email.indexOf('@') - 1) + 1, email.indexOf('@')));
+                    return new UserRecord(rs.getBytes("id"), idx);
+                }
+        );
+        log.info("Found {} seed users for relationship seeding.", allSeedUsers.size());
+
+        seedUserRoles(allSeedUsers, roleIds);
+        seedUserProfiles(allSeedUsers);
+        seedAddresses(allSeedUsers);
 
         long elapsed = (System.currentTimeMillis() - start) / 1000;
         log.info("=== User Data Seeder Completed in {} seconds ===", elapsed);
@@ -202,7 +214,7 @@ public class UserDataSeeder implements CommandLineRunner {
         log.info("Seeding user roles...");
         Timestamp now = Timestamp.from(Instant.now());
 
-        String sql = "INSERT INTO user_roles (id, created_at, last_modified_at, is_deleted, version, " +
+        String sql = "INSERT IGNORE INTO user_roles (id, created_at, last_modified_at, is_deleted, version, " +
                 "user_id, role_id, assigned_at) VALUES (?, ?, ?, ?, 0, ?, ?, ?)";
 
         List<Object[]> batch = new ArrayList<>(BATCH_SIZE);
@@ -239,7 +251,7 @@ public class UserDataSeeder implements CommandLineRunner {
         log.info("Seeding user profiles (every 5th user)...");
         Timestamp now = Timestamp.from(Instant.now());
 
-        String sql = "INSERT INTO user_profiles (id, created_at, last_modified_at, is_deleted, version, " +
+        String sql = "INSERT IGNORE INTO user_profiles (id, created_at, last_modified_at, is_deleted, version, " +
                 "user_id, bio, profile_picture) VALUES (?, ?, ?, ?, 0, ?, ?, ?)";
 
         List<Object[]> batch = new ArrayList<>(BATCH_SIZE);
@@ -276,7 +288,7 @@ public class UserDataSeeder implements CommandLineRunner {
         log.info("Seeding addresses (every 3rd user)...");
         Timestamp now = Timestamp.from(Instant.now());
 
-        String sql = "INSERT INTO addresses (id, created_at, last_modified_at, is_deleted, version, " +
+        String sql = "INSERT IGNORE INTO addresses (id, created_at, last_modified_at, is_deleted, version, " +
                 "street, city, state, country, zip_code, user_id) " +
                 "VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?)";
 

@@ -25,7 +25,11 @@ spec:
             - sh
             - -c
             - |
-              export DB_URL="${DB_URL}&rewriteBatchedStatements=true"
+              case "$DB_URL" in
+                *rewriteBatchedStatements=*) ;;
+                *\?*) export DB_URL="${DB_URL}&rewriteBatchedStatements=true" ;;
+                *)    export DB_URL="${DB_URL}?rewriteBatchedStatements=true" ;;
+              esac
               java $JAVA_OPTS -jar app.jar --spring.profiles.active=seed
           envFrom:
             - configMapRef:
