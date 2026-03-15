@@ -40,3 +40,6 @@ build/
 
 ## Coverage Reports ##
 coverageReport/
+
+## JWT keys (local dev only) ##
+*.pem
