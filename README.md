@@ -183,6 +183,14 @@ Configure the following environment variables for the application:
    export CLIENT_ID=vibevault-client
    export CLIENT_SECRET=your_client_secret
    export REDIRECT_URI=https://oauth.pstmn.io/v1/callback  # Postman callback for testing
+   export RSA_PRIVATE_KEY="$(cat jwt-private.pem)"
+   export RSA_PUBLIC_KEY="$(cat jwt-public.pem)"
+   ```
+
+   **Generate RSA keys** (required for OAuth2 JWT signing):
+   ```bash
+   openssl genrsa -out jwt-private.pem 2048
+   openssl rsa -in jwt-private.pem -pubout -out jwt-public.pem
    ```
 
 5. Build and run the application:
