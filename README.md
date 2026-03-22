@@ -520,8 +520,8 @@ Create a new role.
 }
 ```
 
-#### POST /roles/update
-Update an existing role.
+#### POST /roles/update/{roleId}
+Update an existing role by ID.
 
 **Request Body:**
 ```json
